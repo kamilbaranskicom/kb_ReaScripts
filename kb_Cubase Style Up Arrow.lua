@@ -1,8 +1,17 @@
--- @description Cubase Style Up Arrow (Select previous track/item on previous track)
--- @version 1.0
--- @author kamilbaranski.com
--- @changelog
---  + init 
+--[[
+ * ReaScript Name: Cubase Style Up Arrow (Select previous track/item on previous track)
+ * Author: kamilbaranski.com
+ * Licence: GPL v3
+ * REAPER: 5.0
+ * Extensions: None
+ * Version: 1.0
+--]]
+ 
+--[[
+ * Changelog:
+ * v1.0 (2021-03-23)
+ 	+ Initial Release
+--]]
 
 function UpArrow()
   csmi = reaper.CountSelectedMediaItems(0)
@@ -13,7 +22,4 @@ function UpArrow()
   end
 end
 
--- UpArrow()
-
 reaper.defer(UpArrow)
-

@@ -1,8 +1,17 @@
--- @description Cubase Style Down Arrow (Select next track/item on next track)
--- @version 1.0
--- @author kamilbaranski.com
--- @changelog
---  + init 
+--[[
+ * ReaScript Name: Cubase Style Up Arrow (Select next track/item on next track)
+ * Author: kamilbaranski.com
+ * Licence: GPL v3
+ * REAPER: 5.0
+ * Extensions: None
+ * Version: 1.0
+--]]
+ 
+--[[
+ * Changelog:
+ * v1.0 (2021-03-23)
+ 	+ Initial Release
+--]]
 
 function DownArrow()
   csmi = reaper.CountSelectedMediaItems(0)
