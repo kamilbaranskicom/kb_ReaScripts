@@ -25,7 +25,7 @@ function setVariables()
   os = reaper.GetOS();
   if ((os == "Win64") or (os == "Win32")) then
     curlExePath = "C:\\curl\\bin\\curl.exe";
-  elseif ((os == "OSX32") or (os == "OSX64")) then
+  else
     curlExePath = "/usr/bin/curl";
   end
     
