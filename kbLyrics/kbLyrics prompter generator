@@ -1,0 +1,90 @@
+// lyrics prompter generator
+// (c) kb 20220927
+
+//@param1:bgR 'bg R' 0, 0, 1, 0.01
+//@param2:bgG 'bg G' 0, 0, 1, 0.01
+//@param3:bgB 'bg B' 0.15, 0, 1, 0.01
+//@param4:txtR 'txt R' 1, 0, 1, 0.01
+//@param5:txtG 'txt G' 1, 0, 1, 0.01
+//@param6:txtB 'txt B' 0, 0, 1, 0.01
+//@param7:hbgR 'header bg R' 0, 0, 1, 0.01
+//@param8:hbgG 'header bg G' 1, 0, 1, 0.01
+//@param9:hbgB 'header bg B' 0.45, 0, 1, 0.01
+//@param10:htxtR 'header txt R' 0, 0, 1, 0.01
+//@param11:htxtG 'header txt G' 0, 0, 1, 0.01
+//@param12:htxtB 'header txt B' 0, 0, 1, 0.01
+
+//@param13:size 'text size' 0.09, 0.01, 0.2, 0.001
+
+// (in project_h percentage)
+//@param14:headerSize 'header size' 0.05, 0, 0.2, 0.001
+
+//@gmem=kbLyrics
+
+
+// font
+font="Lato";
+
+// default project size
+!project_wh_valid || project_w<1 || project_h<1 ? ( project_w = 1920; project_h = 1080; );
+
+
+
+#infoLine = "*";
+count = input_count();
+index = count-1;
+loop(count,
+    #name="";
+    // #infoLine += sprintf(1, "%i = ", index); // debug
+    input_get_name(index, #name)>0 ? ( #infoLine += #name ) : ( #infoLine += "[untitled]" ); 
+    #infoLine += "; ";
+    index = index - 1;
+);
+strncpy(#infoLine, #infoLine, strlen(#infoLine)-2); // truncate last semicolon
+
+// blank screen
+//gfx_set(bgR, bgG, bgB, 1);
+//gfx_fillrect(0, 0, project_w, project_h);
+gfx_setfont(headerSize*project_h,font);
+
+function printbox(string, x, y, width, height, bgR, bgG, bgB, txtR, txtG, txtB, leftMarginOrCenterIfMinusOne) (
+  gfx_str_measure(string, textWidth, textHeight);
+  
+  centerX = x + width/2;
+  centerY = y + height/2;
+  
+  gfx_set(bgR, bgG, bgB, 1);
+  gfx_fillrect(x, y, x+width, y+height);
+
+  (leftMarginOrCenterIfMinusOne==-1) ? (left = centerX - textWidth/2) : left = leftMarginOrCenterIfMinusOne;
+  // left = centerX - textWidth/2;  // force center
+  
+  gfx_set(txtR, txtG, txtB, 1);
+  gfx_str_draw(string, left, centerY - textHeight/2);
+);
+
+printbox(#infoLine, 0, 0, project_w, project_h*headerSize, hbgR, hbgG, hbgB, htxtR, htxtG, htxtB, 20);
+
+function gmem_read_string(index, output) local(offset, buf) (
+  offset = 0;
+  buf = #;
+
+  while (
+    gmem[index] ? (
+      str_setchar(buf, offset, gmem[index]);
+      offset += 1;
+      index += 1;
+    ) : 0;
+  );
+
+  strcpy_substr(output, buf, 0, offset); // truncates the output
+);
+
+gfx_setfont(size*project_h,font);
+gfx_set(txtc_r, txtc_g, txtc_b, 1);
+str = #;
+gmem_read_string(0, str);
+gfx_str_draw(str, 200, 140);
+
+
+printbox(str, 0, project_h*headerSize, project_w, project_h*(1-headerSize), bgR, bgG, bgB, txtR, txtG, txtB, -1);
