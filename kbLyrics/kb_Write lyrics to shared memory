@@ -1,0 +1,16 @@
+// Write lyrics to shared memory
+//@gmem=kbLyrics
+
+#lyrics="";
+
+
+function gmem_write_string(index, value) local(offset) (
+  offset = 0;
+  loop(strlen(value),
+    gmem[index] = str_getchar(value, offset);
+    offset += 1;
+    index += 1;
+  );
+  gmem[index] = 0;
+);
+gmem_write_string(0, #lyrics);
