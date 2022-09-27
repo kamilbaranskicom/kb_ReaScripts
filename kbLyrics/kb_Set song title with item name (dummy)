@@ -1,0 +1,4 @@
+// Set song title with item name
+
+// dummy code for reaper (or else Reaper skips the script) :
+anything = true;
