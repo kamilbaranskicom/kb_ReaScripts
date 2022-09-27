@@ -10,4 +10,4 @@
 * The contents of lyrics track must be copied outside (to **lyrics copy** track), otherwise Video Processor can't get lyrics from shared memory (REAPER bug or feature?)
 * You may edit lyrics on the media items on **lyrics**/**lyrics copy** track; every musical sequence lyrics is inside the take FX.
 
-![Screenshot](kbLyrics screenshot.png)
+![Screenshot](https://github.com/kamilbaranskicom/kb_ReaScripts/blob/master/kbLyrics/kbLyrics%20screenshot.png)
