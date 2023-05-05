@@ -4,13 +4,15 @@
  * Licence: GPL v3
  * REAPER: 5.0
  * Extensions: None
- * Version: 1.0
+ * Version: 1.1
 --]]
  
 --[[
  * Changelog:
  * v1.0 (2022-09-26)
    + Initial Release
+ * v1.1 (2023-02-27)
+   + (fix) correct numbers in "remove spaces between numbers"
 --]]
 
 --[[
@@ -104,8 +106,11 @@ function run()
     
     retval, notes, ccs, sysex = reaper.MIDI_CountEvts(activeTake)
     for k = 0, notes-1 do
- 		  retval, sel, muted, startppqposOut, endppqposOut, chan, pitch, vel = reaper.MIDI_GetNote(activeTake, k)
-      name = name .. cuesTexts[pitch] .. " ";
+      retval, sel, muted, startppqposOut, endppqposOut, chan, pitch, vel = reaper.MIDI_GetNote(activeTake, k);
+      
+      if (muted == false) then
+        name = name .. cuesTexts[pitch] .. " ";
+      end
 
       if (cuesColors[pitch]) then
         if (newColorSet == false) then
@@ -114,16 +119,16 @@ function run()
         end
       end
 
- 	  end
+     end
     
     -- remove spaces between numbers
     name = name:gsub("1 2", "12");
     name = name:gsub("2 3", "23");
     name = name:gsub("3 4", "34");
-    name = name:gsub("4 5", "43");
-    name = name:gsub("5 6", "65");
-    name = name:gsub("6 7", "76");
-    name = name:gsub("7 8", "87");
+    name = name:gsub("4 5", "45");
+    name = name:gsub("5 6", "56");
+    name = name:gsub("6 7", "67");
+    name = name:gsub("7 8", "78");
     reaper.GetSetMediaItemTakeInfo_String(activeTake, "P_NAME", name, true)
 
     --if newColor then
