@@ -4,7 +4,7 @@
  * Licence: GPL v3
  * REAPER: 5.0
  * Extensions: None
- * Version: 1.1
+ * Version: 1.2
 --]]
  
 --[[
@@ -13,6 +13,8 @@
    + Initial Release
  * v1.1 (2023-02-27)
    + (fix) correct numbers in "remove spaces between numbers"
+ * v1.2 (2023-05-05)
+   + remove muted notes from item name (but it might be still used for setting the color)
 --]]
 
 --[[
