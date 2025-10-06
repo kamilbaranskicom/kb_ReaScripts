@@ -1,0 +1,38 @@
+desc:kb_RME TotalMix Talkback control
+//tags: MIDI processing
+
+slider1:0<0,1,1>Talkback OFF/ON (for MIDI link)
+slider2:0<0,1,1>Talkback OFF/ON (additional switch)
+slider3:0<0,1,1{No,Yes}>Other events pass through
+
+//todo: slider4:0<0,1,1>Talkback ON while playback is stopped
+
+in_pin:none
+out_pin:none
+
+@init
+old_value = 2;
+
+@slider
+/* slider3<0?slider3=0;
+slider4>127?slider4=127;*/
+value = max(
+          // mix two sliders
+          min(max(0, slider1|0), 127),
+          min(max(0, slider2|0), 127)
+        );
+
+@block
+while (midirecv(ts,msg1,msg23)) (
+  slider3 ? ( midisend(ts, msg1, msg23); );
+);
+
+value != old_value ? (
+  old_value = value;
+  value > 0 ? (
+    midisend(0, 0x90, 0x5e, 0); // note on, ch1, 0x5e (a#6 or a#5), 0 velocity(!)
+  ) : (
+    midisend(0, 0x80, 0x5e, 0); // note off; as above
+  );
+);
+
