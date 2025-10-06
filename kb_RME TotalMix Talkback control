@@ -11,16 +11,21 @@ in_pin:none
 out_pin:none
 
 @init
-old_value = 2;
+old_value =
+      max(
+        // mix two sliders
+        min(max(0, slider1|0), 127),
+        min(max(0, slider2|0), 127)
+      );
 
 @slider
-/* slider3<0?slider3=0;
-slider4>127?slider4=127;*/
-value = max(
-          // mix two sliders
-          min(max(0, slider1|0), 127),
-          min(max(0, slider2|0), 127)
-        );
+value = 
+      max(
+        // mix two sliders
+        min(max(0, slider1|0), 127),
+        min(max(0, slider2|0), 127)
+      );
+
 
 @block
 while (midirecv(ts,msg1,msg23)) (
@@ -35,4 +40,3 @@ value != old_value ? (
     midisend(0, 0x80, 0x5e, 0); // note off; as above
   );
 );
-
