@@ -1,5 +1,5 @@
 --[[
- * ReaScript Name: Cubase Style Up Arrow (Select next track/item on next track)
+ * ReaScript Name: Cubase Style Down Arrow (Select next track/item on next track)
  * Author: kamilbaranski.com
  * Licence: GPL v3
  * REAPER: 5.0

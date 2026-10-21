@@ -4,7 +4,7 @@
  * Licence: GPL v3
  * REAPER: 5.0
  * Extensions: None
- * Version: 1.2
+ * Version: 1.3
 --]]
  
 --[[
@@ -15,6 +15,9 @@
    + (fix) correct numbers in "remove spaces between numbers"
  * v1.2 (2023-05-05)
    + remove muted notes from item name (but it might be still used for setting the color)
+ * v1.3 (2023-05-05)
+   + 95=i (eg. eigth notes)
+   + (fix) 83/84 ("doubletime", "zmianatempa")
 --]]
 
 --[[
@@ -59,7 +62,9 @@ function run()
     [80] = "przyspieszenie",
     [81] = "zwolnienie",
     [82] = "halftime",
-    [83] = "zmianatempa",
+    [83] = "doubletime",
+    [84] = "zmianatempa",
+    [95] = "i",
     [96] = "1",
     [97] = "2",
     [98] = "3",
@@ -90,7 +95,8 @@ function run()
     [80] = {255, 100, 100},   -- "przyspieszenie",
     [81] = {255, 100, 100},   -- "zwolnienie",
     [82] = {255, 100, 100},   -- "halftime",
-    [83] = {255, 100, 100}    -- "zmianatempa",
+    [83] = {255, 100, 100},   -- "doubletime",
+    [84] = {255, 100, 100}    -- "zmianatempa",
 }
 
   count = reaper.CountSelectedMediaItems(0);
@@ -131,6 +137,24 @@ function run()
     name = name:gsub("5 6", "56");
     name = name:gsub("6 7", "67");
     name = name:gsub("7 8", "78");
+    name = name:gsub("1 i", "1i");
+    name = name:gsub("2 i", "2i");
+    name = name:gsub("3 i", "3i");
+    name = name:gsub("4 i", "4i");
+    name = name:gsub("5 i", "5i");
+    name = name:gsub("6 i", "6i");
+    name = name:gsub("7 i", "7i");
+    name = name:gsub("8 i", "8i");
+    
+    -- name = name:gsub("i 1", "i1");
+    name = name:gsub("i 2", "i2");
+    name = name:gsub("i 3", "i3");
+    name = name:gsub("i 4", "i4");
+    name = name:gsub("i 5", "i5");
+    name = name:gsub("i 6", "i6");
+    name = name:gsub("i 7", "i7");
+    name = name:gsub("i 8", "i8");
+        
     reaper.GetSetMediaItemTakeInfo_String(activeTake, "P_NAME", name, true)
 
     --if newColor then

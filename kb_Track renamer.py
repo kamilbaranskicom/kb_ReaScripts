@@ -1,3 +1,11 @@
+# @description Track renamer (with search, replace, regex)
+# @author Kamil Barański (kamilbaranskicom)
+# @version 1.0
+# @about
+#   Batch renames selected tracks with search, replace, case insensitivity, and regex support.
+# @changelog
+#   + Initial release
+
 #Replaces any occurence of [_name_] in the selected track's name field
 from reaper_python import *
 import re, string, sys 
