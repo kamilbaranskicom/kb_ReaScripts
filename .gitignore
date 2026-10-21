@@ -1,0 +1,12 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.bak
+*.bak-reaper
+*.tmp
+
+# Test & private files
+_test/
+_private/
+*.test.*
+secrets.*
