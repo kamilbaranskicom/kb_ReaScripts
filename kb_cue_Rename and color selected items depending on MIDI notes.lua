@@ -1,6 +1,6 @@
 --[[
  * ReaScript Name: Rename and color selected items depending on MIDI notes (kb_cue)
- * Author: kamilbaranski.com
+ * Author: Kamil Baranski (kamilbaranski.com)
  * Licence: GPL v3
  * REAPER: 5.0
  * Extensions: None
