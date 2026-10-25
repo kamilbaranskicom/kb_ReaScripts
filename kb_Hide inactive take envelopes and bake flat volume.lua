@@ -4,24 +4,24 @@
 -- @changelog
 --   + Initial release
 -- @about
---   Skrypt dla REAPER sprawdzający koperty take (Take Envelopes) w zaznaczonych itemach:
---   - Jeśli na kopercie nic się nie dzieje (np. Take Volume na 0 dB lub brak punktów), ukrywa tę kopertę.
---   - Jeśli Take Volume jest na stałej wysokości innej niż 0 dB i item ma tylko jeden take,
---     wartość ta jest mnożona przez głośność itemu (Item Volume), a koperta jest resetowana i ukrywana.
---   - Jeśli koperta zawiera automatyzację (zmienne punkty, krzywe lub Automation Items), pozostaje nienaruszona.
---   - Opcjonalnie ukrywa także koperty Pan, Pitch, Mute, jeżeli są w pozycji neutralnej (brak zmian).
+--   REAPER script that checks Take Envelopes on selected items:
+--   - If the envelope is inactive/idle (e.g., Take Volume at 0 dB or no points), hides the envelope.
+--   - If Take Volume is at a flat level other than 0 dB and the item has only one take,
+--     the value is multiplied into the Item Volume, and the envelope is cleared and hidden.
+--   - If the envelope contains automation (variable points, curves, or Automation Items), it remains untouched.
+--   - Optionally hides Pan, Pitch, and Mute envelopes if they are in their neutral state (no changes).
 
 -- ============================================================================
--- KONFIGURACJA / SETTINGS
+-- SETTINGS
 -- ============================================================================
-local PROCESS_VOLUME_ENVELOPES = true    -- Obsługa Take Volume (ukrywanie przy 0dB, przenoszenie do Item Volume przy innej stałej wartości)
-local PROCESS_OTHER_ENVELOPES  = true    -- Obsługa Pan / Pitch / Mute (ukrywanie, jeśli są neutralne i nic się w nich nie dzieje)
-local ONLY_VISIBLE_ENVELOPES   = false   -- true: przetwarza tylko koperty obecnie widoczne na ekranie; false: czyści również ukryte
+local PROCESS_VOLUME_ENVELOPES = true    -- Process Take Volume (hide at 0 dB, bake into Item Volume if flat at another level)
+local PROCESS_OTHER_ENVELOPES  = true    -- Process Pan / Pitch / Mute (hide if neutral with no changes)
+local ONLY_VISIBLE_ENVELOPES   = false   -- true: process only envelopes currently visible on screen; false: also clean hidden ones
 -- ============================================================================
 
-local EPSILON = 0.0001 -- Margines błędu dla porównań zmiennoprzecinkowych (ok. 0.0008 dB)
+local EPSILON = 0.0001 -- Floating-point comparison tolerance (~0.0008 dB)
 
--- Rozpoznanie typu koperty (z tagów chunka oraz nazwy)
+-- Identify envelope type (from chunk tags and envelope name)
 local function identify_envelope(env)
     local ok_chunk, chunk = reaper.GetEnvelopeStateChunk(env, "", false)
     local _, env_name = reaper.GetEnvelopeName(env)
@@ -56,17 +56,17 @@ local function identify_envelope(env)
     return env_type, chunk
 end
 
--- Sprawdzenie, czy koperta jest obecnie widoczna w arrange view
+-- Check if envelope is currently visible in arrange view
 local function is_chunk_visible(chunk)
     if not chunk then return true end
     local vis = chunk:match("\nVIS%s+(%d+)") or chunk:match("^VIS%s+(%d+)")
     if vis then
         return tonumber(vis) == 1
     end
-    return true -- domyślnie widoczna w REAPER, jeśli brak wpisu VIS
+    return true -- default to visible in REAPER if VIS tag is missing
 end
 
--- Ukrycie koperty (VIS 0) oraz opcjonalne usunięcie punktów
+-- Hide envelope (VIS 0) and optionally clear points
 local function hide_and_clear_envelope(env, clear_points)
     if clear_points then
         reaper.DeleteEnvelopePointRange(env, -10000000, 10000000)
@@ -99,9 +99,9 @@ local function hide_and_clear_envelope(env, clear_points)
     end
 end
 
--- Przetworzenie koperty głośności (Volume)
+-- Process volume envelope
 local function process_volume_envelope(item, take, env, chunk, num_takes)
-    -- 1. Czy istnieją Automation Items? Jeśli tak, automatyzacja jest aktywna.
+    -- 1. Do Automation Items exist? If so, automation is active.
     local num_ai = reaper.CountAutomationItems(env)
     if num_ai > 0 then
         return false, false
@@ -109,13 +109,13 @@ local function process_volume_envelope(item, take, env, chunk, num_takes)
     
     local num_pts = reaper.CountEnvelopePoints(env)
     
-    -- Przypadek 1: Koperta bez żadnych punktów -> domyślne 0 dB (1.0)
+    -- Case 1: Envelope without points -> default 0 dB (1.0)
     if num_pts == 0 then
         hide_and_clear_envelope(env, false)
         return true, false
     end
     
-    -- Przypadek 2: Koperta ma punkty -> sprawdzamy, czy wszystkie mają tę samą wartość
+    -- Case 2: Envelope has points -> check if all points have the same value
     local scale_mode = reaper.GetEnvelopeScalingMode(env)
     local _, _, first_raw = reaper.GetEnvelopePoint(env, 0)
     local first_linear = reaper.ScaleFromEnvelopeMode(scale_mode, first_raw)
@@ -130,39 +130,39 @@ local function process_volume_envelope(item, take, env, chunk, num_takes)
         end
     end
     
-    -- Jeśli wartości punktów się różnią, to na kopercie dzieje się automatyzacja - zostawiamy!
+    -- If point values differ, active automation is present - leave untouched!
     if not is_flat then
         return false, false
     end
     
-    -- Sprawdzamy, czy stały poziom to 0 dB
+    -- Check if flat level is 0 dB
     local is_zero_db = math.abs(first_linear - 1.0) < EPSILON
     
     if is_zero_db then
-        -- Cała koperta jest płaska na 0 dB -> nic się nie dzieje, czyścimy punkty i ukrywamy
+        -- Entire envelope is flat at 0 dB -> no changes, clear points and hide
         hide_and_clear_envelope(env, true)
         return true, false
     else
-        -- Cała koperta jest na stałym poziomie różnym od 0 dB
+        -- Entire envelope is flat at a level other than 0 dB
         if num_takes == 1 then
-            -- Brak innych take'ów w itemie: przenosimy poziom do Item Volume i ukrywamy
+            -- Single-take item: bake level into Item Volume and hide
             local cur_item_vol = reaper.GetMediaItemInfo_Value(item, "D_VOL")
             local new_item_vol = cur_item_vol * first_linear
             reaper.SetMediaItemInfo_Value(item, "D_VOL", new_item_vol)
             reaper.UpdateItemInProject(item)
             
-            -- Czyścimy punkty (by nie dublować poziomu głośności) i ukrywamy
+            -- Clear points (to avoid doubling gain) and hide
             hide_and_clear_envelope(env, true)
             return true, true
         else
-            -- W itemie są inne take'i: zmiana item volume popsułaby pozostałe take'i,
-            -- a ta koperta ma aktywną inną głośność dla tego konkretnego take'a, więc zostawiamy.
+            -- Multiple takes present: modifying Item Volume would alter other takes,
+            -- and this envelope has a custom take volume offset, so keep it intact.
             return false, false
         end
     end
 end
 
--- Przetworzenie pozostałych kopert (Pan, Pitch, Mute)
+-- Process other envelopes (Pan, Pitch, Mute)
 local function process_other_envelope(env, env_type)
     local num_ai = reaper.CountAutomationItems(env)
     if num_ai > 0 then
@@ -175,7 +175,7 @@ local function process_other_envelope(env, env_type)
         return true
     end
     
-    -- Sprawdzamy czy wszystkie punkty są w pozycji neutralnej (0.0: środek, 0 st, unmuted)
+    -- Check if all points are at neutral value (0.0: center, 0 st, unmuted)
     local is_flat_neutral = true
     for p = 0, num_pts - 1 do
         local _, _, pt_raw = reaper.GetEnvelopePoint(env, p)
@@ -193,7 +193,7 @@ local function process_other_envelope(env, env_type)
     return false
 end
 
--- Funkcja główna
+-- Main function
 local function main()
     local num_items = reaper.CountSelectedMediaItems(0)
     if num_items == 0 then

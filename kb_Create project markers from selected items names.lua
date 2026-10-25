@@ -2,11 +2,11 @@
 -- @author Kamil Barański (kamilbaranskicom)
 -- @version 1.0
 -- @about
---   Tworzy marker na początku każdego zaznaczonego itemu, używając nazwy aktywnego take'a lub numeru itemu.
+--   Creates a project marker at the start of each selected item, using the active take name or item number.
 -- @changelog
 --   + Initial release
 
--- Tworzy marker na początku każdego zaznaczonego itemu, z nazwą itemu
+-- Creates a marker at the start of each selected item, using the item name
 reaper.Undo_BeginBlock()
 
 local num_items = reaper.CountSelectedMediaItems(0)
