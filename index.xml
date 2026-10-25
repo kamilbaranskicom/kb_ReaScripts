@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<index version="1" name="kb_ReaScripts" commit="2b73db8fb0cbb8cd62016fb062f0ce7438144096">
+  <category name="_test">
+    <reapack name="kb_Studio Recording Lamp (with Energenie EG-PM1W-001 and curl).lua" type="script" desc="Studio Recording Lamp (with Energenie EG-PM1W-001 and curl)">
+      <version name="1.0" author="kamilbaranski.com" time="2026-10-25T21:33:34Z">
+        <changelog><![CDATA[+ Initial Release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/2b73db8fb0cbb8cd62016fb062f0ce7438144096/_test/kb_Studio%20Recording%20Lamp%20(with%20Energenie%20EG-PM1W-001%20and%20curl).lua</source>
+      </version>
+    </reapack>
+  </category>
+</index>
