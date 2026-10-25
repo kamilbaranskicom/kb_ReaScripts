@@ -1,4 +1,11 @@
 desc:Reverse sustain pedal polarity
+// @description Reverse sustain pedal polarity
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Reverses sustain pedal (or any selected MIDI CC) polarity.
+// @changelog
+//   + Initial Release
 
 --[[
  * JSFX Name: Reverse sustain pedal polarity
