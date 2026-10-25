@@ -1,4 +1,11 @@
 desc:kb_RME TotalMix Talkback control
+// @description RME TotalMix Talkback control
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Control RME TotalMix Talkback via MIDI.
+// @changelog
+//   + Initial release
 //tags: MIDI processing
 
 slider1:0<0,1,1>Talkback OFF/ON (for MIDI link)

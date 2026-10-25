@@ -1,6 +1,6 @@
 --[[
  * ReaScript Name: Studio Recording Lamp (with Energenie EG-PM1W-001 and curl)
- * Author: kamilbaranski.com
+ * Author: Kamil Baranski (kamilbaranski.com)
  * Licence: GPL v3
  * REAPER: 5.0
  * Extensions: None

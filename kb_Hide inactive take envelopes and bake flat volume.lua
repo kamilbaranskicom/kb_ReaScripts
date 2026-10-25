@@ -1,6 +1,6 @@
 -- @description Hide inactive take envelopes and bake flat volume to item
 -- @version 1.0
--- @author Kamil Barański (kamilbaranskicom) & AI
+-- @author Kamil Baranski (kamilbaranski.com)
 -- @changelog
 --   + Initial release
 -- @about

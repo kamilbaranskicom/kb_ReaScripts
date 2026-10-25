@@ -1,6 +1,6 @@
 -- @description Universal Cubase Time-Stretch Import Fixer (Preserve Item Length)
 -- @version 1.1
--- @author Kamil Barański (kamilbaranskicom) & AI
+-- @author Kamil Baranski (kamilbaranski.com)
 -- @changelog
 --   + Initial release
 -- @about Fixes playrate of imported time-stretched items without changing their timeline length.

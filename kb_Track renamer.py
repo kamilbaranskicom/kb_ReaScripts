@@ -1,5 +1,5 @@
 # @description Track renamer (with search, replace, regex)
-# @author Kamil Barański (kamilbaranskicom)
+# @author Kamil Baranski (kamilbaranski.com)
 # @version 1.0
 # @about
 #   Batch renames selected tracks with search, replace, case insensitivity, and regex support.

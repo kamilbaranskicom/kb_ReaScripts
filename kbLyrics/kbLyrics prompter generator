@@ -1,3 +1,11 @@
+// @description kbLyrics prompter generator
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Prompter generator for lyrics video processor in REAPER.
+// @changelog
+//   + Initial release
+
 // lyrics prompter generator
 // (c) kb 20220927
 

@@ -1,4 +1,10 @@
-// Write lyrics to shared memory
+// @description Write lyrics to shared memory
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Writes lyrics string to shared memory for kbLyrics.
+// @changelog
+//   + Initial release
 //@gmem=kbLyrics
 
 #lyrics="";

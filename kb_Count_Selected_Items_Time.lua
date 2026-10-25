@@ -1,5 +1,5 @@
 -- @description Count selected items total time (including all takes)
--- @author Kamil Barański (kamilbaranskicom)
+-- @author Kamil Baranski (kamilbaranski.com)
 -- @version 1.0
 -- @about
 --   Counts total length and recording time of all selected items including all takes.

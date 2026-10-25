@@ -1,5 +1,5 @@
 -- @description Generate loudness envelope for selected track (Album Dynamics)
--- @author Kamil Barański (kamilbaranskicom)
+-- @author Kamil Baranski (kamilbaranski.com)
 -- @version 2.0
 -- @about
 --   Custom interactive GUI tool for album loudness analysis and automation generation.

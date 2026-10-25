@@ -1,5 +1,5 @@
 -- @description Create project markers from selected items names
--- @author Kamil Barański (kamilbaranskicom)
+-- @author Kamil Baranski (kamilbaranski.com)
 -- @version 1.0
 -- @about
 --   Creates a project marker at the start of each selected item, using the active take name or item number.

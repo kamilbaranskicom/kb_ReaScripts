@@ -1,6 +1,6 @@
 --[[
  * ReaScript Name: Add stop marker (!1016) at play or edit cursor
- * Author: kamilbaranski.com
+ * Author: Kamil Baranski (kamilbaranski.com)
  * Licence: GPL v3
  * REAPER: 5.0
  * Extensions: None

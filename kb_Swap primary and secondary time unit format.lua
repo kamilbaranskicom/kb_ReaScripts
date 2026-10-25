@@ -1,5 +1,5 @@
 -- @description Swap primary and secondary time unit format
--- @author Kamil Barański (kamilbaranskicom) & Claude
+-- @author Kamil Baranski (kamilbaranski.com)
 -- @version 1.0
 -- @about
 --   Swaps primary and secondary time units for the ruler.
@@ -7,7 +7,6 @@
 --   + Initial release
 
 -- Swap Primary and Secondary Time Units for Ruler
--- by Claude
 
 -- Function to check a list of command IDs and return the active one
 function GetActiveCommandID(command_list)

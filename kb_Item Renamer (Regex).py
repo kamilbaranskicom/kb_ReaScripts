@@ -1,5 +1,5 @@
 # @description Item renamer (Regex)
-# @author Kamil Barański (kamilbaranskicom)
+# @author Kamil Baranski (kamilbaranski.com)
 # @version 1.0
 # @about
 #   Replaces occurrences matching a regex pattern in selected media items' names.
