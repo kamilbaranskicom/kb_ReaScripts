@@ -1,10 +1,235 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="kb_ReaScripts" commit="2b73db8fb0cbb8cd62016fb062f0ce7438144096">
-  <category name="_test">
-    <reapack name="kb_Studio Recording Lamp (with Energenie EG-PM1W-001 and curl).lua" type="script" desc="Studio Recording Lamp (with Energenie EG-PM1W-001 and curl)">
-      <version name="1.0" author="kamilbaranski.com" time="2026-10-25T21:33:34Z">
+<index version="1" name="kb_ReaScripts" commit="d41fb5250d3f0886dfbf275518a37cd5bb804665">
+  <category name="JSFX">
+    <reapack name="kb_Reverse sustain pedal polarity.jsfx" type="effect" desc="Reverse sustain pedal polarity">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Reverses sustain pedal (or any selected MIDI CC) polarity.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:38:13Z">
         <changelog><![CDATA[+ Initial Release]]></changelog>
-        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/2b73db8fb0cbb8cd62016fb062f0ce7438144096/_test/kb_Studio%20Recording%20Lamp%20(with%20Energenie%20EG-PM1W-001%20and%20curl).lua</source>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/d41fb5250d3f0886dfbf275518a37cd5bb804665/JSFX/kb_Reverse%20sustain%20pedal%20polarity.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="kb_RME TotalMix Talkback control.jsfx" type="effect" desc="kb_RME TotalMix Talkback control">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Control RME TotalMix Talkback via MIDI.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:38:13Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/d41fb5250d3f0886dfbf275518a37cd5bb804665/JSFX/kb_RME%20TotalMix%20Talkback%20control.jsfx</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="kbLyrics">
+    <reapack name="kb_Set song title with item name (dummy).eel" type="script" desc="Set song title with item name (dummy)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Dummy script for kbLyrics to set song title with item name.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:38:13Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/d41fb5250d3f0886dfbf275518a37cd5bb804665/kbLyrics/kb_Set%20song%20title%20with%20item%20name%20(dummy).eel</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Write lyrics to shared memory.eel" type="script" desc="Write lyrics to shared memory">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Writes lyrics string to shared memory for kbLyrics.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:38:13Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/d41fb5250d3f0886dfbf275518a37cd5bb804665/kbLyrics/kb_Write%20lyrics%20to%20shared%20memory.eel</source>
+      </version>
+    </reapack>
+    <reapack name="kbLyrics prompter generator.eel" type="script" desc="kbLyrics prompter generator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Prompter generator for lyrics video processor in REAPER.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:38:13Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/d41fb5250d3f0886dfbf275518a37cd5bb804665/kbLyrics/kbLyrics%20prompter%20generator.eel</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="Scripts">
+    <reapack name="kb_Add stop (1016) marker at play or edit cursor.lua" type="script" desc="Add stop marker (!1016) at play or edit cursor">
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial Release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Add%20stop%20(1016)%20marker%20at%20play%20or%20edit%20cursor.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Count_Selected_Items_Time.lua" type="script" desc="Count selected items total time (including all takes)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Counts total length and recording time of all selected items including all takes.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Count_Selected_Items_Time.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Create project markers from selected items names.lua" type="script" desc="Create project markers from selected items names">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Creates a project marker at the start of each selected item, using the active take name or item number.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Create%20project%20markers%20from%20selected%20items%20names.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Cubase Style Down Arrow.lua" type="script" desc="Cubase Style Down Arrow (Select next track/item on next track)">
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial Release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Cubase%20Style%20Down%20Arrow.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Cubase Style Up Arrow.lua" type="script" desc="Cubase Style Up Arrow (Select previous track/item on previous track)">
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial Release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Cubase%20Style%20Up%20Arrow.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_cue_Rename and color selected items depending on MIDI notes.lua" type="script" desc="Rename and color selected items depending on MIDI notes (kb_cue)">
+      <version name="1.3" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ 95=i (eg. eigth notes)
++ (fix) 83/84 ("doubletime", "zmianatempa")]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_cue_Rename%20and%20color%20selected%20items%20depending%20on%20MIDI%20notes.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Generate loudness envelope for selected track.lua" type="script" desc="Generate loudness envelope for selected track (Album Dynamics)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Custom interactive GUI tool for album loudness analysis and automation generation. Features dedicated Mastering Vertical Zoom (-24..-6 dB), selectable ITU-R BS.1770 metrics (LUFS-S, LUFS-M, RMS), a one-click [REGENERATE ENVELOPES] button, live progress display, peak markers, and a comprehensive dynamics report.\par}
+}
+]]></description>
+      </metadata>
+      <version name="2.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ v2.0: Replaced system input dialog with custom dark-themed GUI control panel
++ v2.0: Interactive [REGENERATE ENVELOPES] button directly inside the window
++ v2.0: Interactive radio buttons for scale zoom and checkboxes for metrics
++ v2.0: Window can stay open while adjusting audio; remembers all preferences]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Generate%20loudness%20envelope%20for%20selected%20track.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Hide inactive take envelopes and bake flat volume.lua" type="script" desc="Hide inactive take envelopes and bake flat volume to item">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 REAPER script that checks Take Envelopes on selected items:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab If the envelope is inactive/idle (e.g., Take Volume at 0 dB or no points), hides the envelope.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab If Take Volume is at a flat level other than 0 dB and the item has only one take, the value is multiplied into the Item Volume, and the envelope is cleared and hidden.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab If the envelope contains automation (variable points, curves, or Automation Items), it remains untouched.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Optionally hides Pan, Pitch, and Mute envelopes if they are in their neutral state (no changes).\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Hide%20inactive%20take%20envelopes%20and%20bake%20flat%20volume.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Item Renamer (Regex).py" type="script" desc="Item renamer (Regex)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Replaces occurrences matching a regex pattern in selected media items' names.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Item%20Renamer%20(Regex).py</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Swap primary and secondary time unit format.lua" type="script" desc="Swap primary and secondary time unit format">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Swaps primary and secondary time units for the ruler.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Swap%20primary%20and%20secondary%20time%20unit%20format.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Time Stretch Fixer.lua" type="script" desc="Universal Cubase Time-Stretch Import Fixer (Preserve Item Length)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Fixes playrate of imported time-stretched items without changing their timeline length.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Time%20Stretch%20Fixer.lua</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Track renamer.py" type="script" desc="Track renamer (with search, replace, regex)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Batch renames selected tracks with search, replace, case insensitivity, and regex support.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:34:42Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="main">https://github.com/kamilbaranskicom/kb_ReaScripts/raw/8e8972986507882ff58eb69ed182ca54f8013efb/Scripts/kb_Track%20renamer.py</source>
       </version>
     </reapack>
   </category>
