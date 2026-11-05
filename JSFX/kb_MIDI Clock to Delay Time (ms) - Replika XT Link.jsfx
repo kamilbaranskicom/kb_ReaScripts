@@ -1,0 +1,207 @@
+desc:kb_MIDI Clock to Delay Time (ms) - Replika XT Link
+// @description kb_MIDI Clock to Delay Time (ms) - Replika XT Link
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Measures the tempo of incoming MIDI Clock (0xF8, 24 ticks per quarter note) with sample-accurate
+//   timing, works out the BPM and shows the delay time for the chosen subdivision. Map the Delay
+//   Time readout slider to a delay parameter (e.g. Replika XT). MIDI passes through unchanged.
+//
+//   PARAMETERS
+//   Delay Time [Readout]   Output: delay time in ms (subdivision of detected tempo + offsets). Map this.
+//   Detected BPM [Readout] Output: detected (quantized) tempo.
+//   Subdivision            Note value the delay time is calculated for (1/4 = one beat).
+//   Min / Max BPM          Accepted tempo range. Beats outside it are ignored.
+//   Consistency Tolerance  How much (%) consecutive beat lengths may differ to still count as
+//                          the same tempo. Larger = more forgiving; a bigger difference is treated
+//                          as a new tempo and the detection restarts.
+//   Lock Intervals         How many consistent beats are averaged before the readout updates.
+//                          1 = fastest lock; more = steadier, but slower.
+//   Output Hysteresis      Readout changes only if the new tempo differs by more than this (%).
+//                          Filters tiny jitter; 0 = follow every update.
+//   BPM Quantize           Rounds the detected BPM to this step BEFORE anything else (so the ms
+//                          value is derived from the rounded BPM). Off = no rounding.
+//   Delay Offset (ms)      Added to the final delay time. Negative = shorter. Use it to shift the
+//                          echo so it does not smear the next transient.
+//   Delay Offset (%)       Scales the delay time (e.g. -1 = 1% shorter), so it follows tempo and
+//                          subdivision. Applied before the ms offset, which is then added.
+// @changelog
+//   + Initial release: sample-accurate MIDI Clock tempo detection, Start/Stop reset, MIDI pass-through
+//   + Subdivision, Lock Intervals, Output Hysteresis, BPM Quantize, Delay Offset (ms and %)
+tags:tempo detector delay midi clock
+in_pin:none
+out_pin:none
+
+slider1:500<0,2000,0.1>Delay Time (ms) [Readout]
+slider2:120<30,300,0.01>Detected BPM [Readout]
+slider3:4<0,14,1{1/1 Whole,1/2 Half,1/2 Dotted,1/4 Dotted,1/4 Quarter,1/4 Triplet,1/8 Dotted,1/8 Eighth,1/8 Triplet,1/16 Dotted,1/16 Sixteenth,1/16 Triplet,1/32 Dotted,1/32 Thirty-Second,1/32 Triplet}>Subdivision
+slider4:40<20,200,1>Min BPM
+slider5:300<60,300,1>Max BPM
+slider6:4<1,20,0.5>Consistency Tolerance (%)
+slider7:2<1,16,1>Lock Intervals (beats)
+slider8:0.3<0,5,0.01>Output Hysteresis (%) [0 = follow exactly]
+slider9:4<0,6,1{Off,0.01 BPM,0.1 BPM,0.5 BPM,1 BPM,2 BPM,5 BPM}>BPM Quantize
+slider10:0<-100,100,0.01>Delay Offset (ms)
+slider11:0<-50,50,0.01>Delay Offset (%)
+
+@init
+// State variables
+ring = 0;            // ring buffer of tick times (samples), 400 slots
+ring_size = 400;
+spl_base = 0;        // absolute sample position of the current block start
+tick_idx = 0;        // index of the next tick since last reset
+last_tick_t = -1;
+prev_beat_sec = 0;
+valid_beats = 0;
+
+// Base tempo state
+base_quarter_sec = 0.5; // 120 BPM default
+current_delay_ms = 500.0;
+current_bpm = 120.0;
+raw_bpm = 120.0;
+has_lock = 0;
+quant_step = 1.0;
+hysteresis_factor = 0.003;
+delay_offset_ms = 0;
+delay_offset_pct = 0;
+min_bpm = 40;
+max_bpm = 300;
+tolerance_factor = 0.04;
+target_intervals = 2;
+
+function get_subdivision_mult(idx)
+(
+  idx == 0  ? 4.0 :            // 1/1
+  idx == 1  ? 2.0 :            // 1/2
+  idx == 2  ? 3.0 :            // 1/2 Dotted
+  idx == 3  ? 1.5 :            // 1/4 Dotted
+  idx == 4  ? 1.0 :            // 1/4 (Quarter)
+  idx == 5  ? (2.0 / 3.0) :    // 1/4 Triplet
+  idx == 6  ? 0.75 :           // 1/8 Dotted
+  idx == 7  ? 0.5 :            // 1/8
+  idx == 8  ? (1.0 / 3.0) :    // 1/8 Triplet
+  idx == 9  ? 0.375 :          // 1/16 Dotted
+  idx == 10 ? 0.25 :           // 1/16
+  idx == 11 ? (1.0 / 6.0) :    // 1/16 Triplet
+  idx == 12 ? 0.1875 :         // 1/32 Dotted
+  idx == 13 ? 0.125 :          // 1/32
+  idx == 14 ? (1.0 / 12.0) :   // 1/32 Triplet
+  1.0;
+);
+
+function get_quant_step(idx)
+(
+  idx == 0 ? 0 :
+  idx == 1 ? 0.01 :
+  idx == 2 ? 0.1 :
+  idx == 3 ? 0.5 :
+  idx == 4 ? 1.0 :
+  idx == 5 ? 2.0 :
+  5.0;
+);
+
+function quantize_bpm(bpm)
+(
+  quant_step > 0 ? floor(bpm / quant_step + 0.5) * quant_step : bpm;
+);
+
+function update_delay_output()
+(
+  mult = get_subdivision_mult(slider3);
+  current_delay_ms = max(0, (base_quarter_sec * mult) * 1000.0 * (1.0 + delay_offset_pct / 100.0) + delay_offset_ms);
+  slider1 = current_delay_ms;
+  slider2 = current_bpm;
+  sliderchange(slider1);
+  sliderchange(slider2);
+);
+
+// Forget the current beat sequence (the readout keeps its last value)
+function reset_tracker()
+(
+  tick_idx = 0;
+  last_tick_t = -1;
+  prev_beat_sec = 0;
+  valid_beats = 0;
+);
+
+// Called on every 24th tick (one quarter note)
+function process_beat(idx)
+(
+  beat_sec = ring[idx % ring_size] - ring[(idx - 24) % ring_size];
+  beat_sec /= srate;
+  calc_bpm = 60.0 / beat_sec;
+
+  (calc_bpm >= min_bpm && calc_bpm <= max_bpm) ? (
+    prev_beat_sec > 0 ? (
+      diff_ratio = abs(beat_sec - prev_beat_sec) / prev_beat_sec;
+      (diff_ratio <= tolerance_factor) ? (
+        valid_beats += 1;
+      ) : (
+        // Inconsistency / new tempo detected -> start fresh sequence immediately
+        valid_beats = 1;
+      );
+    ) : (
+      valid_beats = 1;
+    );
+    prev_beat_sec = beat_sec;
+
+    // Lock: update output once target_intervals consecutive matching beats are detected
+    (valid_beats >= target_intervals && idx >= 24 * target_intervals) ? (
+      avg_sec = (ring[idx % ring_size] - ring[(idx - 24 * target_intervals) % ring_size]) / srate / target_intervals;
+      raw_bpm_new = 60.0 / avg_sec;
+      new_bpm = quantize_bpm(raw_bpm_new);
+
+      // Hysteresis: ignore tiny jitter, always accept first lock or a real tempo change
+      (!has_lock || abs(new_bpm - current_bpm) / current_bpm > hysteresis_factor) ? (
+        raw_bpm = raw_bpm_new;
+        base_quarter_sec = 60.0 / new_bpm;
+        current_bpm = new_bpm;
+        has_lock = 1;
+        update_delay_output();
+      );
+    );
+  ) : (
+    prev_beat_sec = 0;
+    valid_beats = 0;
+  );
+);
+
+@slider
+min_bpm = slider4;
+max_bpm = slider5;
+tolerance_factor = slider6 / 100.0;
+target_intervals = slider7;
+hysteresis_factor = slider8 / 100.0;
+quant_step = get_quant_step(slider9);
+delay_offset_ms = slider10;
+delay_offset_pct = slider11;
+
+// Re-apply quantization to the last detected tempo immediately
+has_lock ? (
+  current_bpm = quantize_bpm(raw_bpm);
+  base_quarter_sec = 60.0 / current_bpm;
+);
+
+update_delay_output();
+
+@block
+while (midirecv(mo, msg1, msg2, msg3)) (
+  msg1 == 0xF8 ? (
+    t = spl_base + mo;
+
+    // Reset if there was a long pause between ticks (clock stopped)
+    (last_tick_t >= 0 && (t - last_tick_t) > srate * (60.0 / min_bpm / 24.0) * 3.0) ? (
+      reset_tracker();
+    );
+    last_tick_t = t;
+
+    ring[tick_idx % ring_size] = t;
+    (tick_idx >= 24 && tick_idx % 24 == 0) ? process_beat(tick_idx);
+    tick_idx += 1;
+  ) : (msg1 == 0xFA || msg1 == 0xFB || msg1 == 0xFC) ? (
+    // Start / Continue / Stop
+    reset_tracker();
+  );
+  midisend(mo, msg1, msg2, msg3); // pass everything through
+);
+spl_base += samplesblock;
