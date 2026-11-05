@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="kb_ReaScripts" commit="d41fb5250d3f0886dfbf275518a37cd5bb804665">
+<index version="1" name="kb_ReaScripts" commit="45a919fd5bb8e9ebfb39db6bd5c8c9adb035ae0c">
   <category name="JSFX">
+    <reapack name="kb_Recording_Clock.jsfx" type="effect" desc="kb_Recording Clock">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 Transport-aware play/record timer. Pass-through; put on a track or master. Right-click the window to set 4 colors: Play/Stop text+background, Rec text+background.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T18:36:26Z">
+        <changelog><![CDATA[+ Four selectable colors (Play/Stop and Rec, text and background)
++ Fixed right-click menu item numbering]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/aae79284b25a29ea1a9607f38be3a32f3ce6e514/JSFX/kb_Recording_Clock.jsfx</source>
+      </version>
+      <version name="1.3" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T19:07:50Z">
+        <changelog><![CDATA[+ Four selectable colors (Play/Stop and Rec, text and background)
++ Counter keeps its value after Stop; resets only on next Play/Rec
++ Fixed right-click menu item numbering
++ Picker docked at the bottom, live preview (Rec colors while editing Rec)]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/45a919fd5bb8e9ebfb39db6bd5c8c9adb035ae0c/JSFX/kb_Recording_Clock.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="kb_Reverse sustain pedal polarity.jsfx" type="effect" desc="Reverse sustain pedal polarity">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
