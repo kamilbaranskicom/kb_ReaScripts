@@ -1,80 +1,94 @@
 desc:kb_Visual Metronome Flasher
 // @description kb_Visual Metronome Flasher
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.1
+// @version 1.2
 // @about
 //   Visual metronome. Pass-through; put on a track or master and open the JSFX window.
-//   Flashes on every selected beat division (1/8 ... 6 beats), with a smooth decay.
+//   Flashes on every selected beat division (1/8 ... 6 beats), with a selectable decay curve.
+//   The first beat of a bar can use its own color and brightness
+//   (bar length from the time signature at the playback position).
 // @changelog
-//   + Renamed to kb_Visual Metronome Flasher
-//   + Smoother flash: full-brightness hit with a soft (squared) decay instead of a dim, linear blink
-//   + Fade is always scaled to fit the beat interval (no more cut-off flashes at fast tempos)
-//   + Sample-accurate beat detection
-//   + New divisions: every 2, 3, 4 and 6 beats
-//   + Fixed color calculation (HSV)
+//   + Separate color and brightness for the bar downbeat (can be turned off)
+//   + Brightness for both colors
+//   + Selectable decay curve
+//   + Fade is now drawn from wall-clock time, so it no longer depends on the GUI/audio block timing
+//   + Renamed to kb_Visual Metronome Flasher, new divisions: 2, 3, 4, 6 beats
 
 slider1:0<0,7,1{1,1/2,1/4,1/8,2,3,4,6}>Beat Division (beats)
 slider2:250<100,1000,0.1>Fade (ms)
-slider3:0<0,100,0.01>Color
+slider3:0<0,100,0.01>Beat Color
+slider4:100<0,100,1>Beat Brightness (%)
+slider5:1<0,1,1{Off,On}>Bar Downbeat Accent
+slider6:60<0,100,0.01>Bar Color
+slider7:100<0,100,1>Bar Brightness (%)
+slider8:1<0,4,1{Linear,Squared,Cubic,Smooth (cosine),Exponential}>Decay Curve
 
 @init
 ext_noinit = 1;
-env = 0;
 cBeat = -1;
+tTrig = -1000;
+accent = 0;
+
+// HSV (S=1, V=1) -> cr, cg, cb
+function hsv(hue) global(cr,cg,cb) local(h,i,f) (
+  h = hue / 100 * 6;
+  i = floor(h);
+  f = h - i;
+  i = i % 6;
+  i == 0 ? (cr = 1;     cg = f;     cb = 0) :
+  i == 1 ? (cr = 1 - f; cg = 1;     cb = 0) :
+  i == 2 ? (cr = 0;     cg = 1;     cb = f) :
+  i == 3 ? (cr = 0;     cg = 1 - f; cb = 1) :
+  i == 4 ? (cr = f;     cg = 0;     cb = 1) :
+           (cr = 1;     cg = 0;     cb = 1 - f);
+);
 
 @slider
-slider1 == 0 ? speed = 1 :
-slider1 == 1 ? speed = 0.5 :
-slider1 == 2 ? speed = 0.25 :
-slider1 == 3 ? speed = 0.125 :
-slider1 == 4 ? speed = 2 :
-slider1 == 5 ? speed = 3 :
-slider1 == 6 ? speed = 4 :
-speed = 6;
+speed = slider1 == 0 ? 1 : slider1 == 1 ? 0.5 : slider1 == 2 ? 0.25 : slider1 == 3 ? 0.125 :
+        slider1 == 4 ? 2 : slider1 == 5 ? 3 : slider1 == 6 ? 4 : 6;
 
-// HSV (S=1, V=1) -> RGB
-h = slider3 / 100 * 6;
-i = floor(h);
-f = h - i;
-i = i % 6;
-i == 0 ? (r = 1;     g = f;     b = 0) :
-i == 1 ? (r = 1 - f; g = 1;     b = 0) :
-i == 2 ? (r = 0;     g = 1;     b = f) :
-i == 3 ? (r = 0;     g = 1 - f; b = 1) :
-i == 4 ? (r = f;     g = 0;     b = 1) :
-         (r = 1;     g = 0;     b = 1 - f);
+hsv(slider3);
+br = cr * slider4 / 100; bg = cg * slider4 / 100; bb = cb * slider4 / 100;
+hsv(slider6);
+ar = cr * slider7 / 100; ag = cg * slider7 / 100; ab = cb * slider7 / 100;
 
 @block
 // Fade never longer than 90% of the interval between flashes
-maxFade = 0.9 * speed * 60 / max(tempo, 1) * srate;
-fadeLength = min(slider2 / 1000 * srate, maxFade);
-fadeLength = max(fadeLength, 1);
-bps = max(tempo, 1) / 60 / srate; // beats per sample
+fadeSec = min(slider2 / 1000, 0.9 * speed * 60 / max(tempo, 1));
+fadeSec = max(fadeSec, 0.01);
+bps = max(tempo, 1) / 60 / srate; // quarter notes per sample
+barLen = ts_num * 4 / max(ts_denom, 1); // quarter notes per bar
 playing = play_state & 1;
 pos = beat_position;
 
 @sample
 playing ? (
-  nBeat = floor(pos / speed);
+  nBeat = floor(pos / speed + 0.000001);
   cBeat != nBeat ? (
-    // don't flash when jumping around; only on a regular forward step
-    (cBeat != -1 && nBeat == cBeat + 1) || cBeat == -1 ? env = 1;
+    // flash only on start or a regular forward step (not when jumping)
+    (cBeat == -1 || nBeat == cBeat + 1) ? (
+      tTrig = time_precise();
+      x = nBeat * speed / barLen;
+      accent = slider5 && abs(x - floor(x + 0.5)) < 0.0001;
+    );
     cBeat = nBeat;
   );
   pos += bps;
 ) : cBeat = -1;
 
-env > 0 ? (
-  env -= 1 / fadeLength;
-  env < 0 ? env = 0;
-);
-
 @gfx 400 150
-a = env * env; // soft decay
+t = (time_precise() - tTrig) / fadeSec;
+t >= 1 ? a = 0 : (
+  c = slider8;
+  c == 0 ? a = 1 - t :
+  c == 1 ? a = (1 - t) * (1 - t) :
+  c == 2 ? a = (1 - t) * (1 - t) * (1 - t) :
+  c == 3 ? a = 0.5 + 0.5 * cos($pi * t) :
+           a = (exp(-5 * t) - exp(-5)) / (1 - exp(-5));
+);
 gfx_a = 1;
-gfx_r = r * a;
-gfx_g = g * a;
-gfx_b = b * a;
+accent ? ( gfx_r = ar * a; gfx_g = ag * a; gfx_b = ab * a; )
+       : ( gfx_r = br * a; gfx_g = bg * a; gfx_b = bb * a; );
 gfx_x = 0;
 gfx_y = 0;
 gfx_rectto(gfx_w, gfx_h);
