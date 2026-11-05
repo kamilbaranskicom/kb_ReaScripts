@@ -1,0 +1,207 @@
+desc:kb_Audio Click to Delay Time (ms) - Replika XT Link
+// @description kb_Audio Click to Delay Time (ms) - Replika XT Link
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Detects clicks (tempo taps) in the audio input, works out the BPM and shows the delay time
+//   for the chosen subdivision. Map the Delay Time readout slider to the Replika XT delay parameter.
+// @changelog
+//   + Initial release
+tags:tempo detector delay
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:4<0,14,1{1/1 Whole,1/2 Half,1/2 Dotted,1/4 Dotted,1/4 Quarter,1/4 Triplet,1/8 Dotted,1/8 Eighth,1/8 Triplet,1/16 Dotted,1/16 Sixteenth,1/16 Triplet,1/32 Dotted,1/32 Thirty-Second,1/32 Triplet}>Subdivision
+slider2:-12<-60,0,0.5>Threshold (dB)
+slider3:75<40,200,1>Min BPM
+slider4:150<60,300,1>Max BPM
+slider5:0<0,2,1{Stereo Sum,Left Only,Right Only}>Audio Input Channel
+slider6:4<1,20,0.5>Consistency Tolerance (%)
+slider7:500<0,2000,0.1>Delay Time (ms) [Readout]
+slider8:120<40,300,0.1>Detected BPM [Readout]
+
+@init
+// State variables
+srate = srate;
+env = 0;
+holdoff_samples = 0;
+last_trigger_spl = 0;
+spl_counter = 0;
+last_play_pos = -1;
+
+// Buffers and counters
+buf_intervals = 1000;
+consecutive_valid_count = 0;
+target_intervals = 2; // Fast lock: 2 consistent intervals (3 clicks)
+
+// Base tempo state
+base_quarter_sec = 0.5; // 120 BPM default
+current_delay_ms = 500.0;
+current_bpm = 120.0;
+
+function get_subdivision_mult(idx)
+(
+  idx == 0  ? 4.0 :            // 1/1
+  idx == 1  ? 2.0 :            // 1/2
+  idx == 2  ? 3.0 :            // 1/2 Dotted
+  idx == 3  ? 1.5 :            // 1/4 Dotted
+  idx == 4  ? 1.0 :            // 1/4 (Quarter)
+  idx == 5  ? (2.0 / 3.0) :    // 1/4 Triplet
+  idx == 6  ? 0.75 :           // 1/8 Dotted
+  idx == 7  ? 0.5 :            // 1/8
+  idx == 8  ? (1.0 / 3.0) :    // 1/8 Triplet
+  idx == 9  ? 0.375 :          // 1/16 Dotted
+  idx == 10 ? 0.25 :           // 1/16
+  idx == 11 ? (1.0 / 6.0) :    // 1/16 Triplet
+  idx == 12 ? 0.1875 :         // 1/32 Dotted
+  idx == 13 ? 0.125 :          // 1/32
+  idx == 14 ? (1.0 / 12.0) :   // 1/32 Triplet
+  1.0;
+);
+
+function update_delay_output()
+(
+  mult = get_subdivision_mult(slider1);
+  current_delay_ms = (base_quarter_sec * mult) * 1000.0;
+  slider7 = current_delay_ms;
+  slider8 = current_bpm;
+  sliderchange(slider7);
+  sliderchange(slider8);
+);
+
+@slider
+thresh_amp = 10 ^ (slider2 / 20);
+min_bpm = slider3;
+max_bpm = slider4;
+input_ch = slider5;
+tolerance_factor = slider6 / 100.0;
+
+min_interval_sec = 60.0 / max_bpm;
+max_interval_sec = 60.0 / min_bpm;
+holdoff_time_samples = (min_interval_sec * 0.45) * srate;
+
+update_delay_output();
+
+@block
+// Reset tracker on transport jump or stop
+(play_position != last_play_pos + (samplesblock / srate) && last_play_pos >= 0) ? (
+  last_trigger_spl = 0;
+  consecutive_valid_count = 0;
+);
+last_play_pos = play_position;
+
+@sample
+spl_counter += 1;
+
+// Pick input channel
+input_ch == 0 ? (
+  in_spl = abs(spl0 + spl1) * 0.5;
+) : input_ch == 1 ? (
+  in_spl = abs(spl0);
+) : (
+  in_spl = abs(spl1);
+);
+
+// Fast attack envelope follower
+in_spl > env ? (
+  env = in_spl;
+) : (
+  env = env * 0.995;
+);
+
+// Transient detection with holdoff
+is_trigger = 0;
+holdoff_samples > 0 ? (
+  holdoff_samples -= 1;
+) : (
+  (env > thresh_amp) ? (
+    is_trigger = 1;
+    holdoff_samples = holdoff_time_samples;
+  );
+);
+
+// Trigger processing
+is_trigger ? (
+  last_trigger_spl > 0 ? (
+    delta_spl = spl_counter - last_trigger_spl;
+    delta_sec = delta_spl / srate;
+
+    // Reset if there was a long pause between clicks
+    delta_sec > (max_interval_sec * 1.5) ? (
+      consecutive_valid_count = 0;
+    );
+
+    test_bpm = 60.0 / delta_sec;
+
+    // Subclick / shuffle handling
+    (test_bpm > max_bpm) ? (
+      // Straight 8th (2x)
+      t_sec = delta_sec * 2.0;
+      t_bpm = 60.0 / t_sec;
+      (t_bpm >= min_bpm && t_bpm <= max_bpm) ? (
+        delta_sec = t_sec;
+      ) : (
+        // Shuffle / swing triplet (~3x)
+        t_sec = delta_sec * 3.0;
+        t_bpm = 60.0 / t_sec;
+        (t_bpm >= min_bpm && t_bpm <= max_bpm) ? (
+          delta_sec = t_sec;
+        ) : (
+          // Dotted / swung 8th (1.5x)
+          t_sec = delta_sec * 1.5;
+          t_bpm = 60.0 / t_sec;
+          (t_bpm >= min_bpm && t_bpm <= max_bpm) ? (
+            delta_sec = t_sec;
+          );
+        );
+      );
+    );
+
+    calc_bpm = 60.0 / delta_sec;
+
+    // Check bounds
+    (calc_bpm >= min_bpm && calc_bpm <= max_bpm) ? (
+      consecutive_valid_count > 0 ? (
+        ref_interval = buf_intervals[consecutive_valid_count - 1];
+        diff_ratio = abs(delta_sec - ref_interval) / ref_interval;
+
+        (diff_ratio <= tolerance_factor) ? (
+          buf_intervals[consecutive_valid_count] = delta_sec;
+          consecutive_valid_count += 1;
+        ) : (
+          // Inconsistency / new tempo detected -> start fresh sequence immediately
+          buf_intervals[0] = delta_sec;
+          consecutive_valid_count = 1;
+        );
+      ) : (
+        buf_intervals[0] = delta_sec;
+        consecutive_valid_count = 1;
+      );
+
+      // Fast Lock: update output as soon as 2 consecutive matching intervals are detected (3 clicks)
+      (consecutive_valid_count >= target_intervals) ? (
+        sum_sec = 0;
+        i = 0;
+        loop(consecutive_valid_count,
+          sum_sec += buf_intervals[i];
+          i += 1;
+        );
+        avg_sec = sum_sec / consecutive_valid_count;
+
+        base_quarter_sec = avg_sec;
+        current_bpm = 60.0 / avg_sec;
+
+        update_delay_output();
+
+        // Keep rolling buffer so subsequent clicks keep refining without delay
+        buf_intervals[0] = buf_intervals[consecutive_valid_count - 1];
+        consecutive_valid_count = 1;
+      );
+    ) : (
+      consecutive_valid_count = 0;
+    );
+  );
+  last_trigger_spl = spl_counter;
+);
