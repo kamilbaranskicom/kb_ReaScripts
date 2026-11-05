@@ -1,0 +1,80 @@
+desc:kb_Visual Metronome Flasher
+// @description kb_Visual Metronome Flasher
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.1
+// @about
+//   Visual metronome. Pass-through; put on a track or master and open the JSFX window.
+//   Flashes on every selected beat division (1/8 ... 6 beats), with a smooth decay.
+// @changelog
+//   + Renamed to kb_Visual Metronome Flasher
+//   + Smoother flash: full-brightness hit with a soft (squared) decay instead of a dim, linear blink
+//   + Fade is always scaled to fit the beat interval (no more cut-off flashes at fast tempos)
+//   + Sample-accurate beat detection
+//   + New divisions: every 2, 3, 4 and 6 beats
+//   + Fixed color calculation (HSV)
+
+slider1:0<0,7,1{1,1/2,1/4,1/8,2,3,4,6}>Beat Division (beats)
+slider2:250<100,1000,0.1>Fade (ms)
+slider3:0<0,100,0.01>Color
+
+@init
+ext_noinit = 1;
+env = 0;
+cBeat = -1;
+
+@slider
+slider1 == 0 ? speed = 1 :
+slider1 == 1 ? speed = 0.5 :
+slider1 == 2 ? speed = 0.25 :
+slider1 == 3 ? speed = 0.125 :
+slider1 == 4 ? speed = 2 :
+slider1 == 5 ? speed = 3 :
+slider1 == 6 ? speed = 4 :
+speed = 6;
+
+// HSV (S=1, V=1) -> RGB
+h = slider3 / 100 * 6;
+i = floor(h);
+f = h - i;
+i = i % 6;
+i == 0 ? (r = 1;     g = f;     b = 0) :
+i == 1 ? (r = 1 - f; g = 1;     b = 0) :
+i == 2 ? (r = 0;     g = 1;     b = f) :
+i == 3 ? (r = 0;     g = 1 - f; b = 1) :
+i == 4 ? (r = f;     g = 0;     b = 1) :
+         (r = 1;     g = 0;     b = 1 - f);
+
+@block
+// Fade never longer than 90% of the interval between flashes
+maxFade = 0.9 * speed * 60 / max(tempo, 1) * srate;
+fadeLength = min(slider2 / 1000 * srate, maxFade);
+fadeLength = max(fadeLength, 1);
+bps = max(tempo, 1) / 60 / srate; // beats per sample
+playing = play_state & 1;
+pos = beat_position;
+
+@sample
+playing ? (
+  nBeat = floor(pos / speed);
+  cBeat != nBeat ? (
+    // don't flash when jumping around; only on a regular forward step
+    (cBeat != -1 && nBeat == cBeat + 1) || cBeat == -1 ? env = 1;
+    cBeat = nBeat;
+  );
+  pos += bps;
+) : cBeat = -1;
+
+env > 0 ? (
+  env -= 1 / fadeLength;
+  env < 0 ? env = 0;
+);
+
+@gfx 400 150
+a = env * env; // soft decay
+gfx_a = 1;
+gfx_r = r * a;
+gfx_g = g * a;
+gfx_b = b * a;
+gfx_x = 0;
+gfx_y = 0;
+gfx_rectto(gfx_w, gfx_h);
