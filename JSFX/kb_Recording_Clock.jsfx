@@ -1,0 +1,172 @@
+desc:kb_Recording Clock
+// @description kb_Recording Clock
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.1
+// @about
+//   Transport-aware play/record timer. Pass-through; put on a track or master.
+//   Right-click the window to set 4 colors: Play/Stop text+background, Rec text+background.
+// @changelog
+//   + Four selectable colors (Play/Stop and Rec, text and background)
+//   + Fixed right-click menu item numbering
+
+slider1:13684944<0,16777215,1>-Play/Stop text color (packed RGB)
+slider2:3421236<0,16777215,1>-Play/Stop background color (packed RGB)
+slider3:3355647<0,16777215,1>-Record text color (packed RGB)
+slider4:460567<0,16777215,1>-Record background color (packed RGB)
+
+@init
+ext_noinit = 1;
+rec_elapsed = 0;
+last_transport_state = -1;
+transport_state = 0;
+prev_mouse_cap = 0;
+picker_open = 0;
+picker_target = 0;
+
+@gfx 360 160
+// Poll keyboard so mouse modifier state is available.
+key = gfx_getchar();
+key == 27 ? picker_open = 0;
+
+// Right-click opens the context menu.
+right_down = (mouse_cap & 2) ? 1 : 0;
+right_down && !(prev_mouse_cap & 2) && !picker_open ? (
+  gfx_x = mouse_x;
+  gfx_y = mouse_y;
+  menu_choice = gfx_showmenu(">Play / Stop|Text color...|<Background color...|>Record|Text color...|<Background color...|Reset defaults");
+  menu_choice == 1 ? ( picker_target = 1; picker_open = 1; );
+  menu_choice == 2 ? ( picker_target = 2; picker_open = 1; );
+  menu_choice == 3 ? ( picker_target = 3; picker_open = 1; );
+  menu_choice == 4 ? ( picker_target = 4; picker_open = 1; );
+  menu_choice == 5 ? (
+    slider1 = 13684944; slider2 = 3421236;
+    slider3 = 3355647; slider4 = 460567;
+    sliderchange(slider1); sliderchange(slider2); sliderchange(slider3);
+    sliderchange(slider4);
+  );
+);
+
+// Choose the active palette values.
+picker_target == 1 ? selected_color = slider1;
+picker_target == 2 ? selected_color = slider2;
+picker_target == 3 ? selected_color = slider3;
+picker_target == 4 ? selected_color = slider4;
+
+// Main clock background and status.
+transport_state == 5 ? (
+  bg = slider4; fg = slider3; #status_text = "REC";
+) : (
+  bg = slider2; fg = slider1;
+  transport_state == 1 ? #status_text = "PLAY";
+  (transport_state == 2 || transport_state == 6) ? #status_text = "PAUSE";
+  (transport_state != 1 && transport_state != 2 && transport_state != 6) ? #status_text = "STOP";
+);
+
+bg_r = (bg & 255) / 255;
+bg_g = ((bg >> 8) & 255) / 255;
+bg_b = ((bg >> 16) & 255) / 255;
+fg_r = (fg & 255) / 255;
+fg_g = ((fg >> 8) & 255) / 255;
+fg_b = ((fg >> 16) & 255) / 255;
+
+gfx_set(bg_r, bg_g, bg_b, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Format elapsed time as HH:MM:SS or d HH:MM:SS if over 24 hours.
+total_seconds = floor(rec_elapsed + 0.0001);
+days = floor(total_seconds / 86400);
+rem_seconds = total_seconds - days * 86400;
+hours = floor(rem_seconds / 3600);
+minutes = floor((rem_seconds - hours * 3600) / 60);
+seconds = rem_seconds - hours * 3600 - minutes * 60;
+
+days > 0 ? (
+  sprintf(#clock_text, "%dd %02d:%02d:%02d", days, hours, minutes, seconds);
+) : (
+  sprintf(#clock_text, "%02d:%02d:%02d", hours, minutes, seconds);
+);
+
+// Font size automatically scales based on window height.
+font_size = max(14, floor(gfx_h * 0.4));
+gfx_setfont(1, "Arial", font_size, 'b');
+gfx_measurestr(#clock_text, text_w, text_h);
+gfx_set(fg_r, fg_g, fg_b, 1);
+gfx_x = (gfx_w - text_w) * 0.5;
+gfx_y = (gfx_h - text_h) * 0.5 - 2;
+gfx_drawstr(#clock_text);
+
+// Small status indicator in the upper-right corner.
+gfx_setfont(2, "Arial", 10, 'b');
+gfx_measurestr(#status_text, status_w, status_h);
+gfx_x = gfx_w - status_w - 9;
+gfx_y = 7;
+gfx_drawstr(#status_text);
+
+// In-window RGB picker. Right-click menu remains the only way to open it.
+picker_open ? (
+  // Dark translucent-style panel (opaque for predictable rendering).
+  gfx_set(0.055, 0.055, 0.06, 1);
+  gfx_rect(12, 10, gfx_w - 24, gfx_h - 20);
+  gfx_set(0.88, 0.88, 0.88, 1);
+  gfx_setfont(2, "Arial", 12, 'b');
+  picker_target == 1 ? #title = "Play / Stop - text color";
+  picker_target == 2 ? #title = "Play / Stop - background color";
+  picker_target == 3 ? #title = "Record - text color";
+  picker_target == 4 ? #title = "Record - background color";
+  gfx_x = 24; gfx_y = 17; gfx_drawstr(#title);
+
+  // RGB component bars.
+  color_changed = 0;
+  rr = selected_color & 255;
+  gg = (selected_color >> 8) & 255;
+  bb = (selected_color >> 16) & 255;
+  bar_x = 72; bar_w = gfx_w - 112;
+  gfx_set(0.85, 0.85, 0.85, 1); gfx_x = 25; gfx_y = 43; gfx_drawstr("R");
+  gfx_x = 25; gfx_y = 67; gfx_drawstr("G");
+  gfx_x = 25; gfx_y = 91; gfx_drawstr("B");
+
+  gfx_set(0.18, 0.18, 0.18, 1); gfx_rect(bar_x, 43, bar_w, 12); gfx_rect(bar_x, 67, bar_w, 12); gfx_rect(bar_x, 91, bar_w, 12);
+  gfx_set(1, 0.12, 0.12, 1); gfx_rect(bar_x, 43, bar_w * rr / 255, 12);
+  gfx_set(0.12, 1, 0.12, 1); gfx_rect(bar_x, 67, bar_w * gg / 255, 12);
+  gfx_set(0.12, 0.35, 1, 1); gfx_rect(bar_x, 91, bar_w * bb / 255, 12);
+
+  // Drag/click on a component bar to change it.
+  (mouse_cap & 1) ? (
+    mouse_x >= bar_x && mouse_x <= bar_x + bar_w ? (
+      mouse_y >= 40 && mouse_y <= 58 ? rr = floor((mouse_x - bar_x) * 255 / bar_w + 0.5);
+      mouse_y >= 64 && mouse_y <= 82 ? gg = floor((mouse_x - bar_x) * 255 / bar_w + 0.5);
+      mouse_y >= 88 && mouse_y <= 106 ? bb = floor((mouse_x - bar_x) * 255 / bar_w + 0.5);
+      selected_color = rr + gg * 256 + bb * 65536;
+      color_changed = 1;
+      picker_target == 1 ? ( slider1 = selected_color; sliderchange(slider1); );
+      picker_target == 2 ? ( slider2 = selected_color; sliderchange(slider2); );
+      picker_target == 3 ? ( slider3 = selected_color; sliderchange(slider3); );
+      picker_target == 4 ? ( slider4 = selected_color; sliderchange(slider4); );
+    );
+  );
+
+  // Preview swatch and Done button.
+  gfx_set(rr / 255, gg / 255, bb / 255, 1); gfx_rect(24, 116, 42, 18);
+  gfx_set(0.85, 0.85, 0.85, 1); gfx_setfont(2, "Arial", 10, 0);
+  gfx_x = 76; gfx_y = 119; gfx_drawstr("Right-click menu > color to edit another set");
+  gfx_set(0.22, 0.22, 0.22, 1); gfx_rect(gfx_w - 76, gfx_h - 34, 54, 22);
+  gfx_set(1, 1, 1, 1); gfx_x = gfx_w - 65; gfx_y = gfx_h - 29; gfx_drawstr("Done");
+  (mouse_cap & 1) && mouse_x >= gfx_w - 76 && mouse_x <= gfx_w - 22 && mouse_y >= gfx_h - 34 && mouse_y <= gfx_h - 12 ? picker_open = 0;
+
+);
+
+prev_mouse_cap = mouse_cap;
+
+@block
+// Transport state values: 0=stopped, 1=playing, 5=recording, 6=record-paused.
+transport_state = play_state;
+
+// Track elapsed time during both playing (1) and recording (5), resetting on fresh start.
+(play_state == 1 || play_state == 5) ? (
+  (last_transport_state != 1 && last_transport_state != 5 && last_transport_state != 6) ? rec_elapsed = 0;
+  srate > 0 ? rec_elapsed += samplesblock / srate;
+) : (
+  play_state == 0 ? rec_elapsed = 0;
+);
+last_transport_state = play_state;
+
