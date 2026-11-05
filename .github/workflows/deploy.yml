@@ -22,8 +22,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Install Pandoc
-        run: sudo apt-get install -yy pandoc
+      - name: Set up Pandoc
+        uses: pandoc/actions/setup@v1
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
