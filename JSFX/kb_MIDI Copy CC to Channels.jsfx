@@ -120,17 +120,14 @@ function set_bit(g, i, v)
 (
   get_bit(g, i) == v ? 0 : (
     dlt = v ? (1 << i) : -(1 << i);
-    g == 1 ? src_mask += dlt :
-    g == 2 ? dst_mask += dlt :
-    cc_on[i] = v;
+    g == 1 ? (src_mask += dlt;) : g == 2 ? (dst_mask += dlt;) : (cc_on[i] = v;);
     1;
   );
 );
 
 function set_all(g, v)
 (
-  g == 1 ? src_mask = v ? 65535 : 0 :
-  g == 2 ? dst_mask = v ? 65535 : 0 : (
+  g == 1 ? (src_mask = v ? 65535 : 0;) : g == 2 ? (dst_mask = v ? 65535 : 0;) : (
     k = 0;
     loop(128, cc_on[k] = (v && k < 120) ? 1 : 0; k += 1;);
   );
