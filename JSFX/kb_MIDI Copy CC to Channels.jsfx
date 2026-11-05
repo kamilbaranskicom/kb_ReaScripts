@@ -1,12 +1,18 @@
 desc:kb_MIDI Copy CC to Channels
 // @description kb_MIDI Copy CC to Channels
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.0
+// @version 1.1
 // @about
 //   Copies MIDI Control Change messages from one channel (or any channel) to the MIDI channels you
 //   pick, so e.g. one volume / expression fader can drive several instruments (strings on
 //   channels 2-4) at once. The original message always passes through; all other MIDI is untouched.
 //   Only the selected channels get copies, so the MIDI bus is not flooded with 16 channels.
+//
+//   CHANNEL GRID
+//   Click a channel (1-16) in the grid to switch copying to it on/off; click and drag to paint
+//   several channels at once. Green = receives copies, dark = off, outlined = the source channel
+//   (it never receives a copy of its own messages). The 16 switches are also hidden parameters
+//   ("Copy to Ch 1-16"), so they can still be automated or mapped.
 //
 //   PARAMETERS
 //   Source Channel   Channel the CC is read from. Any = every incoming channel (each message is
@@ -14,8 +20,8 @@ desc:kb_MIDI Copy CC to Channels
 //   Copy             Selected CC = only the CC Number below; All CCs = every CC 0-119 (channel
 //                    mode messages 120-127, e.g. All Notes Off, are never copied).
 //   CC Number        CC used in the "Selected CC" mode (e.g. 7 = volume, 11 = expression).
-//   Copy to Ch 1-16  Switch on every channel that should receive a copy.
 // @changelog
+//   + Channel grid (click / drag) instead of 16 separate sliders
 //   + Initial release
 tags:midi cc copy channel
 in_pin:none
@@ -24,33 +30,39 @@ out_pin:none
 slider1:0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Source Channel
 slider2:0<0,1,1{Selected CC,All CCs (0-119)}>Copy
 slider3:7<0,127,1>CC Number
-slider4:0<0,1,1{Off,On}>Copy to Ch 1
-slider5:1<0,1,1{Off,On}>Copy to Ch 2
-slider6:1<0,1,1{Off,On}>Copy to Ch 3
-slider7:1<0,1,1{Off,On}>Copy to Ch 4
-slider8:0<0,1,1{Off,On}>Copy to Ch 5
-slider9:0<0,1,1{Off,On}>Copy to Ch 6
-slider10:0<0,1,1{Off,On}>Copy to Ch 7
-slider11:0<0,1,1{Off,On}>Copy to Ch 8
-slider12:0<0,1,1{Off,On}>Copy to Ch 9
-slider13:0<0,1,1{Off,On}>Copy to Ch 10
-slider14:0<0,1,1{Off,On}>Copy to Ch 11
-slider15:0<0,1,1{Off,On}>Copy to Ch 12
-slider16:0<0,1,1{Off,On}>Copy to Ch 13
-slider17:0<0,1,1{Off,On}>Copy to Ch 14
-slider18:0<0,1,1{Off,On}>Copy to Ch 15
-slider19:0<0,1,1{Off,On}>Copy to Ch 16
+slider4:0<0,1,1{Off,On}>-Copy to Ch 1
+slider5:1<0,1,1{Off,On}>-Copy to Ch 2
+slider6:1<0,1,1{Off,On}>-Copy to Ch 3
+slider7:1<0,1,1{Off,On}>-Copy to Ch 4
+slider8:0<0,1,1{Off,On}>-Copy to Ch 5
+slider9:0<0,1,1{Off,On}>-Copy to Ch 6
+slider10:0<0,1,1{Off,On}>-Copy to Ch 7
+slider11:0<0,1,1{Off,On}>-Copy to Ch 8
+slider12:0<0,1,1{Off,On}>-Copy to Ch 9
+slider13:0<0,1,1{Off,On}>-Copy to Ch 10
+slider14:0<0,1,1{Off,On}>-Copy to Ch 11
+slider15:0<0,1,1{Off,On}>-Copy to Ch 12
+slider16:0<0,1,1{Off,On}>-Copy to Ch 13
+slider17:0<0,1,1{Off,On}>-Copy to Ch 14
+slider18:0<0,1,1{Off,On}>-Copy to Ch 15
+slider19:0<0,1,1{Off,On}>-Copy to Ch 16
+
+@init
+function update_mask()
+(
+  dest_mask = 0;
+  i = 0;
+  loop(16,
+    slider(4 + i) ? dest_mask = dest_mask | (1 << i);
+    i += 1;
+  );
+);
 
 @slider
 src_ch = slider1;       // 0 = any, 1..16
 all_cc = slider2 == 1;
 cc_sel = slider3;
-dest_mask = 0;
-i = 0;
-loop(16,
-  slider(4 + i) ? dest_mask = dest_mask | (1 << i);
-  i += 1;
-);
+update_mask();
 
 @block
 while (midirecv(offset, msg1, msg2, msg3)) (
@@ -66,4 +78,54 @@ while (midirecv(offset, msg1, msg2, msg3)) (
       i += 1;
     );
   );
+);
+
+@gfx 420 110
+pad = 10;
+cols = 8;
+cw = (gfx_w - 2 * pad) / cols;
+rh = 30;
+y0 = 28;
+
+gfx_set(0.85, 0.85, 0.85, 1);
+gfx_x = pad; gfx_y = 8;
+gfx_drawstr("Copy to MIDI channel:");
+
+mouse_down = gfx_mouse_cap & 1;
+mx = gfx_mouse_x; my = gfx_mouse_y;
+hover = (mx >= pad && mx < pad + cols * cw && my >= y0 && my < y0 + 2 * rh) ?
+  floor((my - y0) / rh) * cols + floor((mx - pad) / cw) : -1;
+
+(mouse_down && !last_down && hover >= 0) ? (
+  paint_val = slider(4 + hover) ? 0 : 1;
+  painting = 1;
+);
+!mouse_down ? painting = 0;
+
+(painting && hover >= 0 && hover != src_ch - 1 && slider(4 + hover) != paint_val) ? (
+  slider(4 + hover) = paint_val;
+  slider_automate(1 << (3 + hover));
+  update_mask();
+);
+last_down = mouse_down;
+
+i = 0;
+loop(16,
+  cx = pad + (i % cols) * cw;
+  cy = y0 + floor(i / cols) * rh;
+  is_src = (i == src_ch - 1);
+  on = slider(4 + i);
+
+  on && !is_src ? gfx_set(0.2, 0.7, 0.35, 1) : gfx_set(0.18, 0.18, 0.18, 1);
+  gfx_rect(cx + 2, cy + 2, cw - 4, rh - 4, 1);
+  is_src ? (
+    gfx_set(0.9, 0.7, 0.2, 1);
+    gfx_rect(cx + 2, cy + 2, cw - 4, rh - 4, 0);
+  );
+
+  gfx_set(1, 1, 1, on && !is_src ? 1 : 0.55);
+  gfx_x = cx + cw / 2 - (i < 9 ? 3 : 7);
+  gfx_y = cy + rh / 2 - 5;
+  gfx_drawnumber(i + 1, 0);
+  i += 1;
 );
