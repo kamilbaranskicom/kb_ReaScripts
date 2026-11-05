@@ -1,26 +1,56 @@
 desc:kb_Audio Click to Delay Time (ms) - Replika XT Link
 // @description kb_Audio Click to Delay Time (ms) - Replika XT Link
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.0
+// @version 1.2
 // @about
 //   Detects clicks (tempo taps) in the audio input, works out the BPM and shows the delay time
 //   for the chosen subdivision. Map the Delay Time readout slider to the Replika XT delay parameter.
+//
+//   PARAMETERS
+//   Delay Time [Readout]   Output: delay time in ms (subdivision of detected tempo + offset). Map this.
+//   Detected BPM [Readout] Output: detected (quantized) tempo.
+//   Subdivision            Note value the delay time is calculated for (1/4 = one beat).
+//   Threshold              Input level (dB) a click must exceed to be detected.
+//   Min / Max BPM          Accepted tempo range. Clicks outside it are ignored; double/triple/1.5x
+//                          intervals are folded into the range (subclick / shuffle handling).
+//   Audio Input Channel    Which channel(s) are analysed: stereo sum, left or right.
+//   Consistency Tolerance  How much (%) consecutive click intervals may differ to still count as
+//                          the same tempo. Larger = more forgiving of sloppy timing; a bigger
+//                          difference is treated as a new tempo and the detection restarts.
+//   Lock Intervals         How many consistent intervals are averaged before the readout updates.
+//                          2 = fastest lock (3 clicks); more = steadier, but slower.
+//   Output Hysteresis      Readout changes only if the new tempo differs by more than this (%).
+//                          Filters tiny jitter; 0 = follow every update.
+//   BPM Quantize           Rounds the detected BPM to this step BEFORE anything else (so the ms
+//                          value is derived from the rounded BPM). Off = no rounding.
+//   Delay Offset (ms)      Added to the final delay time. Negative = shorter. Use it to shift the
+//                          echo so it does not smear the next transient.
+//   Delay Offset (%)       Scales the delay time (e.g. -1 = 1% shorter), so it follows tempo and
+//                          subdivision. Applied before the ms offset, which is then added.
 // @changelog
-//   + Initial release
+//   + BPM Quantize (default 1 BPM), Delay Offset (ms) and Delay Offset (%)
+//   + Parameters documented in the header
+//   + Readout sliders moved to the top (easier mapping)
+//   + Lock Intervals and Output Hysteresis: stable readouts without jitter
 tags:tempo detector delay
 in_pin:Left
 in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:4<0,14,1{1/1 Whole,1/2 Half,1/2 Dotted,1/4 Dotted,1/4 Quarter,1/4 Triplet,1/8 Dotted,1/8 Eighth,1/8 Triplet,1/16 Dotted,1/16 Sixteenth,1/16 Triplet,1/32 Dotted,1/32 Thirty-Second,1/32 Triplet}>Subdivision
-slider2:-12<-60,0,0.5>Threshold (dB)
-slider3:75<40,200,1>Min BPM
-slider4:150<60,300,1>Max BPM
-slider5:0<0,2,1{Stereo Sum,Left Only,Right Only}>Audio Input Channel
-slider6:4<1,20,0.5>Consistency Tolerance (%)
-slider7:500<0,2000,0.1>Delay Time (ms) [Readout]
-slider8:120<40,300,0.1>Detected BPM [Readout]
+slider1:500<0,2000,0.1>Delay Time (ms) [Readout]
+slider2:120<40,300,0.1>Detected BPM [Readout]
+slider3:4<0,14,1{1/1 Whole,1/2 Half,1/2 Dotted,1/4 Dotted,1/4 Quarter,1/4 Triplet,1/8 Dotted,1/8 Eighth,1/8 Triplet,1/16 Dotted,1/16 Sixteenth,1/16 Triplet,1/32 Dotted,1/32 Thirty-Second,1/32 Triplet}>Subdivision
+slider4:-20<-60,0,0.5>Threshold (dB)
+slider5:75<40,200,1>Min BPM
+slider6:150<60,300,1>Max BPM
+slider7:0<0,2,1{Stereo Sum,Left Only,Right Only}>Audio Input Channel
+slider8:4<1,20,0.5>Consistency Tolerance (%)
+slider9:2<2,16,1>Lock Intervals (clicks - 1)
+slider10:0.3<0,5,0.01>Output Hysteresis (%) [0 = follow exactly]
+slider11:4<0,6,1{Off,0.01 BPM,0.1 BPM,0.5 BPM,1 BPM,2 BPM,5 BPM}>BPM Quantize
+slider12:0<-100,100,0.01>Delay Offset (ms)
+slider13:0<-50,50,0.01>Delay Offset (%)
 
 @init
 // State variables
@@ -34,7 +64,13 @@ last_play_pos = -1;
 // Buffers and counters
 buf_intervals = 1000;
 consecutive_valid_count = 0;
-target_intervals = 2; // Fast lock: 2 consistent intervals (3 clicks)
+target_intervals = 2; // Set by slider9 (Lock Intervals)
+hysteresis_factor = 0.003; // Set by slider10
+has_lock = 0;
+raw_bpm = 120.0;
+quant_step = 1.0;
+delay_offset_ms = 0;
+delay_offset_pct = 0;
 
 // Base tempo state
 base_quarter_sec = 0.5; // 120 BPM default
@@ -61,22 +97,49 @@ function get_subdivision_mult(idx)
   1.0;
 );
 
+function get_quant_step(idx)
+(
+  idx == 0 ? 0 :
+  idx == 1 ? 0.01 :
+  idx == 2 ? 0.1 :
+  idx == 3 ? 0.5 :
+  idx == 4 ? 1.0 :
+  idx == 5 ? 2.0 :
+  5.0;
+);
+
+function quantize_bpm(bpm)
+(
+  quant_step > 0 ? floor(bpm / quant_step + 0.5) * quant_step : bpm;
+);
+
 function update_delay_output()
 (
-  mult = get_subdivision_mult(slider1);
-  current_delay_ms = (base_quarter_sec * mult) * 1000.0;
-  slider7 = current_delay_ms;
-  slider8 = current_bpm;
-  sliderchange(slider7);
-  sliderchange(slider8);
+  mult = get_subdivision_mult(slider3);
+  current_delay_ms = max(0, (base_quarter_sec * mult) * 1000.0 * (1.0 + delay_offset_pct / 100.0) + delay_offset_ms);
+  slider1 = current_delay_ms;
+  slider2 = current_bpm;
+  sliderchange(slider1);
+  sliderchange(slider2);
 );
 
 @slider
-thresh_amp = 10 ^ (slider2 / 20);
-min_bpm = slider3;
-max_bpm = slider4;
-input_ch = slider5;
-tolerance_factor = slider6 / 100.0;
+thresh_amp = 10 ^ (slider4 / 20);
+min_bpm = slider5;
+max_bpm = slider6;
+input_ch = slider7;
+tolerance_factor = slider8 / 100.0;
+target_intervals = slider9;
+hysteresis_factor = slider10 / 100.0;
+quant_step = get_quant_step(slider11);
+delay_offset_ms = slider12;
+delay_offset_pct = slider13;
+
+// Re-apply quantization to the last detected tempo immediately
+has_lock ? (
+  current_bpm = quantize_bpm(raw_bpm);
+  base_quarter_sec = 60.0 / current_bpm;
+);
 
 min_interval_sec = 60.0 / max_bpm;
 max_interval_sec = 60.0 / min_bpm;
@@ -180,7 +243,7 @@ is_trigger ? (
         consecutive_valid_count = 1;
       );
 
-      // Fast Lock: update output as soon as 2 consecutive matching intervals are detected (3 clicks)
+      // Lock: update output once target_intervals consecutive matching intervals are detected
       (consecutive_valid_count >= target_intervals) ? (
         sum_sec = 0;
         i = 0;
@@ -190,10 +253,17 @@ is_trigger ? (
         );
         avg_sec = sum_sec / consecutive_valid_count;
 
-        base_quarter_sec = avg_sec;
-        current_bpm = 60.0 / avg_sec;
+        raw_bpm_new = 60.0 / avg_sec;
+        new_bpm = quantize_bpm(raw_bpm_new);
 
-        update_delay_output();
+        // Hysteresis: ignore tiny jitter, always accept first lock or a real tempo change
+        (!has_lock || abs(new_bpm - current_bpm) / current_bpm > hysteresis_factor) ? (
+          raw_bpm = raw_bpm_new;
+          base_quarter_sec = 60.0 / new_bpm;
+          current_bpm = new_bpm;
+          has_lock = 1;
+          update_delay_output();
+        );
 
         // Keep rolling buffer so subsequent clicks keep refining without delay
         buf_intervals[0] = buf_intervals[consecutive_valid_count - 1];
