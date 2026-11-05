@@ -1,68 +1,147 @@
 desc:kb_MIDI Copy CC to Channels
 // @description kb_MIDI Copy CC to Channels
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.1
+// @version 1.2
 // @about
-//   Copies MIDI Control Change messages from one channel (or any channel) to the MIDI channels you
-//   pick, so e.g. one volume / expression fader can drive several instruments (strings on
-//   channels 2-4) at once. The original message always passes through; all other MIDI is untouched.
-//   Only the selected channels get copies, so the MIDI bus is not flooded with 16 channels.
+//   Copies MIDI Control Change messages from chosen source channels to chosen destination channels,
+//   so e.g. one volume / expression fader can drive several instruments (strings on channels 2-4)
+//   at once. The original message always passes through; all other MIDI is untouched. Only the
+//   selected channels get copies, so the MIDI bus is not flooded with 16 channels.
 //
-//   CHANNEL GRID
-//   Click a channel (1-16) in the grid to switch copying to it on/off; click and drag to paint
-//   several channels at once. Green = receives copies, dark = off, outlined = the source channel
-//   (it never receives a copy of its own messages). The 16 switches are also hidden parameters
-//   ("Copy to Ch 1-16"), so they can still be automated or mapped.
-//
-//   PARAMETERS
-//   Source Channel   Channel the CC is read from. Any = every incoming channel (each message is
-//                    copied to the selected channels except the one it came in on).
-//   Copy             Selected CC = only the CC Number below; All CCs = every CC 0-119 (channel
-//                    mode messages 120-127, e.g. All Notes Off, are never copied).
-//   CC Number        CC used in the "Selected CC" mode (e.g. 7 = volume, 11 = expression).
+//   GRIDS (click to toggle, click and drag to paint many at once)
+//   Source channels   Channels the CC is read from (several can be selected).
+//   Copy to channels  Channels that receive the copies. A copy is never sent back to the channel
+//                     the message came from.
+//   CC numbers        Which controllers are copied (0-127). Hover a cell to see the CC name,
+//                     e.g. "CC 7: Channel Volume (MSB)". Buttons: "0-119" selects all real
+//                     controllers (not the channel-mode messages 120-127, e.g. All Notes Off),
+//                     "None" clears the grid.
+//   The grid state is stored in hidden parameters, so it is saved with presets and projects.
 // @changelog
+//   + Source channels and CC numbers as clickable grids (several of each), CC names on hover
+//   + Fixed mouse input
 //   + Channel grid (click / drag) instead of 16 separate sliders
 //   + Initial release
 tags:midi cc copy channel
 in_pin:none
 out_pin:none
 
-slider1:0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Source Channel
-slider2:0<0,1,1{Selected CC,All CCs (0-119)}>Copy
-slider3:7<0,127,1>CC Number
-slider4:0<0,1,1{Off,On}>-Copy to Ch 1
-slider5:1<0,1,1{Off,On}>-Copy to Ch 2
-slider6:1<0,1,1{Off,On}>-Copy to Ch 3
-slider7:1<0,1,1{Off,On}>-Copy to Ch 4
-slider8:0<0,1,1{Off,On}>-Copy to Ch 5
-slider9:0<0,1,1{Off,On}>-Copy to Ch 6
-slider10:0<0,1,1{Off,On}>-Copy to Ch 7
-slider11:0<0,1,1{Off,On}>-Copy to Ch 8
-slider12:0<0,1,1{Off,On}>-Copy to Ch 9
-slider13:0<0,1,1{Off,On}>-Copy to Ch 10
-slider14:0<0,1,1{Off,On}>-Copy to Ch 11
-slider15:0<0,1,1{Off,On}>-Copy to Ch 12
-slider16:0<0,1,1{Off,On}>-Copy to Ch 13
-slider17:0<0,1,1{Off,On}>-Copy to Ch 14
-slider18:0<0,1,1{Off,On}>-Copy to Ch 15
-slider19:0<0,1,1{Off,On}>-Copy to Ch 16
+slider1:1<0,65535,1>-Source channels (bit mask)
+slider2:14<0,65535,1>-Copy-to channels (bit mask)
+slider3:128<0,65535,1>-CC 0-15 (bit mask)
+slider4:0<0,65535,1>-CC 16-31 (bit mask)
+slider5:0<0,65535,1>-CC 32-47 (bit mask)
+slider6:0<0,65535,1>-CC 48-63 (bit mask)
+slider7:0<0,65535,1>-CC 64-79 (bit mask)
+slider8:0<0,65535,1>-CC 80-95 (bit mask)
+slider9:0<0,65535,1>-CC 96-111 (bit mask)
+slider10:0<0,65535,1>-CC 112-127 (bit mask)
 
 @init
-function update_mask()
+cc_on = 0;        // 128 flags: CC enabled
+name_off = 128;   // 128 offsets into #names
+name_len = 256;   // 128 lengths
+src_mask = 1;
+dst_mask = 14;
+last_down = 0;
+active_g = 0;
+
+strcpy(#names, "");
+strcat(#names, "Bank Select (MSB)|Modulation Wheel (MSB)|Breath Controller (MSB)|Undefined|Foot Controller (MSB)|Portamento Time (MSB)|Data Entry (MSB)|Channel Volume (MSB)|");
+strcat(#names, "Balance (MSB)|Undefined|Pan (MSB)|Expression (MSB)|Effect Control 1 (MSB)|Effect Control 2 (MSB)|Undefined|Undefined|");
+strcat(#names, "General Purpose 1 (MSB)|General Purpose 2 (MSB)|General Purpose 3 (MSB)|General Purpose 4 (MSB)|Undefined|Undefined|Undefined|Undefined|");
+strcat(#names, "Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|");
+strcat(#names, "Bank Select (LSB)|Modulation Wheel (LSB)|Breath Controller (LSB)|Undefined|Foot Controller (LSB)|Portamento Time (LSB)|Data Entry (LSB)|Channel Volume (LSB)|");
+strcat(#names, "Balance (LSB)|Undefined|Pan (LSB)|Expression (LSB)|Effect Control 1 (LSB)|Effect Control 2 (LSB)|Undefined|Undefined|");
+strcat(#names, "General Purpose 1 (LSB)|General Purpose 2 (LSB)|General Purpose 3 (LSB)|General Purpose 4 (LSB)|Undefined|Undefined|Undefined|Undefined|");
+strcat(#names, "Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|");
+strcat(#names, "Sustain Pedal|Portamento On/Off|Sostenuto|Soft Pedal|Legato Footswitch|Hold 2|Sound Variation|Resonance (Timbre)|");
+strcat(#names, "Release Time|Attack Time|Brightness (Cutoff)|Decay Time|Vibrato Rate|Vibrato Depth|Vibrato Delay|Sound Control 10|");
+strcat(#names, "General Purpose 5|General Purpose 6|General Purpose 7|General Purpose 8|Portamento Control|Undefined|Undefined|Undefined|");
+strcat(#names, "High Res Velocity Prefix|Undefined|Undefined|Reverb Send|Tremolo Depth|Chorus Send|Detune (Celeste)|Phaser Depth|");
+strcat(#names, "Data Increment|Data Decrement|NRPN (LSB)|NRPN (MSB)|RPN (LSB)|RPN (MSB)|Undefined|Undefined|");
+strcat(#names, "Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|");
+strcat(#names, "Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|Undefined|");
+strcat(#names, "All Sound Off|Reset All Controllers|Local Control|All Notes Off|Omni Off|Omni On|Mono On|Poly On|");
+
+// Index the names (separated by |)
+n = 0; pos = 0; name_off[0] = 0;
+loop(strlen(#names),
+  str_getchar(#names, pos) == 124 ? (
+    name_len[n] = pos - name_off[n];
+    n += 1;
+    name_off[n] = pos + 1;
+  );
+  pos += 1;
+);
+
+function load_from_sliders()
 (
-  dest_mask = 0;
-  i = 0;
-  loop(16,
-    slider(4 + i) ? dest_mask = dest_mask | (1 << i);
-    i += 1;
+  src_mask = slider1;
+  dst_mask = slider2;
+  cc_words[0] = slider3; cc_words[1] = slider4; cc_words[2] = slider5; cc_words[3] = slider6;
+  cc_words[4] = slider7; cc_words[5] = slider8; cc_words[6] = slider9; cc_words[7] = slider10;
+  k = 0;
+  loop(128,
+    cc_on[k] = (cc_words[floor(k / 16)] >> (k % 16)) & 1;
+    k += 1;
   );
 );
 
+function save_to_sliders()
+(
+  w = 0;
+  loop(8,
+    v = 0; b = 0;
+    loop(16,
+      cc_on[w * 16 + b] ? v += (1 << b);
+      b += 1;
+    );
+    cc_words[w] = v;
+    w += 1;
+  );
+  slider1 = src_mask;
+  slider2 = dst_mask;
+  slider3 = cc_words[0]; slider4 = cc_words[1]; slider5 = cc_words[2]; slider6 = cc_words[3];
+  slider7 = cc_words[4]; slider8 = cc_words[5]; slider9 = cc_words[6]; slider10 = cc_words[7];
+  sliderchange(1023);
+  slider_automate(1023);
+);
+
+function get_bit(g, i)
+(
+  g == 1 ? (src_mask >> i) & 1 :
+  g == 2 ? (dst_mask >> i) & 1 :
+  cc_on[i];
+);
+
+// returns 1 if the value actually changed
+function set_bit(g, i, v)
+(
+  get_bit(g, i) == v ? 0 : (
+    dlt = v ? (1 << i) : -(1 << i);
+    g == 1 ? src_mask += dlt :
+    g == 2 ? dst_mask += dlt :
+    cc_on[i] = v;
+    1;
+  );
+);
+
+function set_all(g, v)
+(
+  g == 1 ? src_mask = v ? 65535 : 0 :
+  g == 2 ? dst_mask = v ? 65535 : 0 : (
+    k = 0;
+    loop(128, cc_on[k] = (v && k < 120) ? 1 : 0; k += 1;);
+  );
+);
+
+function grid_y(g) ( g == 1 ? 24 : g == 2 ? 76 : 128; );
+function grid_rh(g) ( g == 3 ? 20 : 26; );
+function grid_rows(g) ( g == 3 ? 8 : 1; );
+
 @slider
-src_ch = slider1;       // 0 = any, 1..16
-all_cc = slider2 == 1;
-cc_sel = slider3;
-update_mask();
+load_from_sliders();
 
 @block
 while (midirecv(offset, msg1, msg2, msg3)) (
@@ -71,61 +150,123 @@ while (midirecv(offset, msg1, msg2, msg3)) (
   status = msg1 & $xF0;
   ch = msg1 & $x0F;       // 0-based
 
-  (status == $xB0 && (src_ch == 0 || src_ch - 1 == ch) && (all_cc ? msg2 < 120 : msg2 == cc_sel)) ? (
-    i = 0;
+  (status == $xB0 && ((src_mask >> ch) & 1) && cc_on[msg2 & 127]) ? (
+    d = 0;
     loop(16,
-      (i != ch && (dest_mask & (1 << i))) ? midisend(offset, $xB0 | i, msg2, msg3);
-      i += 1;
+      (d != ch && ((dst_mask >> d) & 1)) ? midisend(offset, $xB0 | d, msg2, msg3);
+      d += 1;
     );
   );
 );
 
-@gfx 420 110
+@gfx 640 316
 pad = 10;
-cols = 8;
+cols = 16;
 cw = (gfx_w - 2 * pad) / cols;
-rh = 30;
-y0 = 28;
-
-gfx_set(0.85, 0.85, 0.85, 1);
-gfx_x = pad; gfx_y = 8;
-gfx_drawstr("Copy to MIDI channel:");
-
-mouse_down = gfx_mouse_cap & 1;
 mx = gfx_mouse_x; my = gfx_mouse_y;
-hover = (mx >= pad && mx < pad + cols * cw && my >= y0 && my < y0 + 2 * rh) ?
-  floor((my - y0) / rh) * cols + floor((mx - pad) / cw) : -1;
+mouse_down = gfx_mouse_cap & 1;
 
-(mouse_down && !last_down && hover >= 0) ? (
-  paint_val = slider(4 + hover) ? 0 : 1;
-  painting = 1;
+// What is under the mouse?
+hover_g = 0; hover_i = -1;
+g = 1;
+loop(3,
+  gy = grid_y(g); rh = grid_rh(g);
+  (mx >= pad && mx < pad + cols * cw && my >= gy && my < gy + grid_rows(g) * rh) ? (
+    hover_g = g;
+    hover_i = floor((my - gy) / rh) * cols + floor((mx - pad) / cw);
+  );
+  g += 1;
 );
-!mouse_down ? painting = 0;
 
-(painting && hover >= 0 && hover != src_ch - 1 && slider(4 + hover) != paint_val) ? (
-  slider(4 + hover) = paint_val;
-  slider_automate(1 << (3 + hover));
-  update_mask();
+// Buttons (All / None) above each grid
+hover_btn_g = 0; hover_btn = 0;
+g = 1;
+loop(3,
+  by = grid_y(g) - 19;
+  (my >= by && my < by + 16) ? (
+    (mx >= gfx_w - pad - 104 && mx < gfx_w - pad - 54) ? (hover_btn_g = g; hover_btn = 1;);
+    (mx >= gfx_w - pad - 50 && mx < gfx_w - pad) ? (hover_btn_g = g; hover_btn = 2;);
+  );
+  g += 1;
+);
+
+changed = 0;
+(mouse_down && !last_down) ? (
+  hover_btn_g ? (
+    set_all(hover_btn_g, hover_btn == 1);
+    changed = 1;
+  ) : hover_g ? (
+    active_g = hover_g;
+    paint_v = get_bit(hover_g, hover_i) ? 0 : 1;
+  );
+);
+!mouse_down ? active_g = 0;
+(mouse_down && active_g && hover_g == active_g) ? (
+  set_bit(active_g, hover_i, paint_v) ? changed = 1;
 );
 last_down = mouse_down;
+changed ? save_to_sliders();
 
-i = 0;
-loop(16,
-  cx = pad + (i % cols) * cw;
-  cy = y0 + floor(i / cols) * rh;
-  is_src = (i == src_ch - 1);
-  on = slider(4 + i);
+// Drawing
+gfx_setfont(1, "Arial", 14);
+g = 1;
+loop(3,
+  gy = grid_y(g); rh = grid_rh(g); rows = grid_rows(g);
 
-  on && !is_src ? gfx_set(0.2, 0.7, 0.35, 1) : gfx_set(0.18, 0.18, 0.18, 1);
-  gfx_rect(cx + 2, cy + 2, cw - 4, rh - 4, 1);
-  is_src ? (
-    gfx_set(0.9, 0.7, 0.2, 1);
-    gfx_rect(cx + 2, cy + 2, cw - 4, rh - 4, 0);
+  gfx_set(0.85, 0.85, 0.85, 1);
+  gfx_x = pad; gfx_y = gy - 19;
+  g == 1 ? gfx_drawstr("Source channels (read CC from)") :
+  g == 2 ? gfx_drawstr("Copy to channels") :
+  gfx_drawstr("CC numbers (hover for name)");
+
+  // buttons
+  b = 1;
+  loop(2,
+    bx = gfx_w - pad - (b == 1 ? 104 : 50);
+    gfx_set(0.3, 0.3, 0.3, 1);
+    gfx_rect(bx, gy - 19, 50 - 4, 16, 1);
+    gfx_set(1, 1, 1, 1);
+    sprintf(#s, "%s", b == 1 ? (g == 3 ? "0-119" : "All") : "None");
+    gfx_measurestr(#s, tw, th);
+    gfx_x = bx + (46 - tw) / 2; gfx_y = gy - 19 + (16 - th) / 2;
+    gfx_drawstr(#s);
+    b += 1;
   );
 
-  gfx_set(1, 1, 1, on && !is_src ? 1 : 0.55);
-  gfx_x = cx + cw / 2 - (i < 9 ? 3 : 7);
-  gfx_y = cy + rh / 2 - 5;
-  gfx_drawnumber(i + 1, 0);
-  i += 1;
+  i = 0;
+  loop(rows * cols,
+    cx = pad + (i % cols) * cw;
+    cy = gy + floor(i / cols) * rh;
+    on = get_bit(g, i);
+    on ? (
+      g == 1 ? gfx_set(0.25, 0.5, 0.85, 1) :
+      g == 2 ? gfx_set(0.2, 0.7, 0.35, 1) :
+      gfx_set(0.85, 0.55, 0.2, 1);
+    ) : gfx_set(0.18, 0.18, 0.18, 1);
+    gfx_rect(cx + 1, cy + 1, cw - 2, rh - 2, 1);
+    (g == hover_g && i == hover_i) ? (
+      gfx_set(1, 1, 1, 1);
+      gfx_rect(cx + 1, cy + 1, cw - 2, rh - 2, 0);
+    );
+
+    gfx_set(1, 1, 1, on ? 1 : 0.5);
+    sprintf(#s, "%d", g == 3 ? i : i + 1);
+    gfx_measurestr(#s, tw, th);
+    gfx_x = cx + (cw - tw) / 2; gfx_y = cy + (rh - th) / 2;
+    gfx_drawstr(#s);
+    i += 1;
+  );
+  g += 1;
+);
+
+// Info line
+gfx_set(0.85, 0.85, 0.85, 1);
+gfx_x = pad; gfx_y = 128 + 8 * 20 + 6;
+hover_g == 3 ? (
+  strcpy_substr(#nm, #names, name_off[hover_i], name_len[hover_i]);
+  sprintf(#info, "CC %d: %s", hover_i, #nm);
+  gfx_drawstr(#info);
+) : hover_g ? (
+  sprintf(#info, "MIDI channel %d", hover_i + 1);
+  gfx_drawstr(#info);
 );
