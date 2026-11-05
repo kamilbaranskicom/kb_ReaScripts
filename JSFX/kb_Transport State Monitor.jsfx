@@ -1,0 +1,35 @@
+desc:kb_Transport State Monitor
+// @description kb_Transport State Monitor
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Turns the REAPER transport state into a parameter: 1 while playing or recording, 0 otherwise
+//   (stopped or paused). Use it as a source for Parameter Modulation / Link from FX parameter, so
+//   another plugin parameter can follow play/stop (e.g. switch an effect on only during playback,
+//   or reset something on start). Audio and MIDI are not touched.
+//
+//   PARAMETERS
+//   Play State [Readout]   Output: 1 = playing or recording, 0 = stopped / paused. Do not edit by hand.
+//
+//   NOTE: the track must be processed while the transport is stopped for the 0 to be reported
+//   (enable "Run FX when stopped" in REAPER's FX / track settings).
+// @changelog
+//   + Initial release
+tags:transport utility parameter
+in_pin:none
+out_pin:none
+
+slider1:0<0,1,1>Play State [Readout: 0 = stopped, 1 = playing/recording]
+
+@init
+last_state = -1;
+
+@block
+// Check if transport is playing (1) or recording (4)
+current_state = (play_state & 1) || (play_state & 4) ? 1 : 0;
+
+current_state != last_state ? (
+    slider1 = current_state;
+    slider_automate(slider1);
+    last_state = current_state;
+);
