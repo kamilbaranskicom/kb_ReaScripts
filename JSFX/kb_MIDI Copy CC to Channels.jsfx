@@ -1,0 +1,69 @@
+desc:kb_MIDI Copy CC to Channels
+// @description kb_MIDI Copy CC to Channels
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Copies MIDI Control Change messages from one channel (or any channel) to the MIDI channels you
+//   pick, so e.g. one volume / expression fader can drive several instruments (strings on
+//   channels 2-4) at once. The original message always passes through; all other MIDI is untouched.
+//   Only the selected channels get copies, so the MIDI bus is not flooded with 16 channels.
+//
+//   PARAMETERS
+//   Source Channel   Channel the CC is read from. Any = every incoming channel (each message is
+//                    copied to the selected channels except the one it came in on).
+//   Copy             Selected CC = only the CC Number below; All CCs = every CC 0-119 (channel
+//                    mode messages 120-127, e.g. All Notes Off, are never copied).
+//   CC Number        CC used in the "Selected CC" mode (e.g. 7 = volume, 11 = expression).
+//   Copy to Ch 1-16  Switch on every channel that should receive a copy.
+// @changelog
+//   + Initial release
+tags:midi cc copy channel
+in_pin:none
+out_pin:none
+
+slider1:0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Source Channel
+slider2:0<0,1,1{Selected CC,All CCs (0-119)}>Copy
+slider3:7<0,127,1>CC Number
+slider4:0<0,1,1{Off,On}>Copy to Ch 1
+slider5:1<0,1,1{Off,On}>Copy to Ch 2
+slider6:1<0,1,1{Off,On}>Copy to Ch 3
+slider7:1<0,1,1{Off,On}>Copy to Ch 4
+slider8:0<0,1,1{Off,On}>Copy to Ch 5
+slider9:0<0,1,1{Off,On}>Copy to Ch 6
+slider10:0<0,1,1{Off,On}>Copy to Ch 7
+slider11:0<0,1,1{Off,On}>Copy to Ch 8
+slider12:0<0,1,1{Off,On}>Copy to Ch 9
+slider13:0<0,1,1{Off,On}>Copy to Ch 10
+slider14:0<0,1,1{Off,On}>Copy to Ch 11
+slider15:0<0,1,1{Off,On}>Copy to Ch 12
+slider16:0<0,1,1{Off,On}>Copy to Ch 13
+slider17:0<0,1,1{Off,On}>Copy to Ch 14
+slider18:0<0,1,1{Off,On}>Copy to Ch 15
+slider19:0<0,1,1{Off,On}>Copy to Ch 16
+
+@slider
+src_ch = slider1;       // 0 = any, 1..16
+all_cc = slider2 == 1;
+cc_sel = slider3;
+dest_mask = 0;
+i = 0;
+loop(16,
+  slider(4 + i) ? dest_mask = dest_mask | (1 << i);
+  i += 1;
+);
+
+@block
+while (midirecv(offset, msg1, msg2, msg3)) (
+  midisend(offset, msg1, msg2, msg3); // original always passes through
+
+  status = msg1 & $xF0;
+  ch = msg1 & $x0F;       // 0-based
+
+  (status == $xB0 && (src_ch == 0 || src_ch - 1 == ch) && (all_cc ? msg2 < 120 : msg2 == cc_sel)) ? (
+    i = 0;
+    loop(16,
+      (i != ch && (dest_mask & (1 << i))) ? midisend(offset, $xB0 | i, msg2, msg3);
+      i += 1;
+    );
+  );
+);
