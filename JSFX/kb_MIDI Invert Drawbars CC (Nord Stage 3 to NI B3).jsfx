@@ -1,0 +1,37 @@
+desc:kb_MIDI Invert Drawbars CC (Nord Stage 3 to NI B3)
+// @description kb_MIDI Invert Drawbars CC (Nord Stage 3 to NI B3)
+// @author Kamil Baranski (kamilbaranski.com)
+// @version 1.0
+// @about
+//   Inverts the values of drawbar controllers (CC 16-24, value -> 127 - value), because the Nord
+//   Stage 3 drawbars work in the opposite direction to the drawbars in NI B3 / Kontakt Organs.
+//   All other MIDI messages pass through unchanged.
+//
+//   PARAMETERS
+//   MIDI Channel   Channel on which the drawbar CCs are inverted (All = every channel).
+// @changelog
+//   + Initial release
+tags:midi drawbars organ cc invert
+in_pin:none
+out_pin:none
+
+slider1:0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel
+
+@block
+while (midirecv(offset, msg1, msg23)) (
+  status = msg1 & $xF0;
+  channel = (msg1 & $x0F) + 1;
+  cc_num = msg23 & $x7F;
+  cc_val = (msg23 >> 8) & $x7F;
+
+  // Process only Control Change messages ($xB0)
+  (status == $xB0 && (slider1 == 0 || slider1 == channel)) ? (
+    // Check if CC is within the range [16-24]
+    (cc_num >= 16 && cc_num <= 24) ? (
+      cc_val = 127 - cc_val;
+      msg23 = cc_num | (cc_val << 8);
+    );
+  );
+
+  midisend(offset, msg1, msg23);
+);
