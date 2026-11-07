@@ -1,7 +1,7 @@
 desc:kb_MIDI Route CC to Channels
 // @description kb_MIDI Route CC to Channels
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.4
+// @version 1.5
 // @about
 //   Copies or re-routes MIDI Control Change messages from chosen source channels to chosen
 //   destination channels, so e.g. one volume / expression fader can drive several instruments
@@ -21,8 +21,12 @@ desc:kb_MIDI Route CC to Channels
 //                     e.g. "CC 7: Channel Volume (MSB)". Buttons: "0-119" selects all real
 //                     controllers (not the channel-mode messages 120-127, e.g. All Notes Off),
 //                     "None" clears the grid.
+//   Search           Type in the window to find CCs by name or number (e.g. "vol", "pan", "64");
+//                    matches get a yellow outline. Backspace deletes, Esc clears. "Add found" /
+//                    "Remove found" switch all matches on / off in one click.
 //   The grid state is stored in hidden parameters, so it is saved with presets and projects.
 // @changelog
+//   + CC search by name / number, default CCs: 1, 7, 11, 64
 //   + Defaults: Remove original (route), destinations 1-4
 //   + Fixed wrong description of CC 0 (array overlap)
 //   + Renamed from "Copy CC to Channels"; Original CC: Keep / Remove (route instead of copy)
@@ -37,11 +41,11 @@ out_pin:none
 slider11:1<0,1,1{Keep original,Remove original (route)}>Original CC
 slider1:1<0,65535,1>-Source channels (bit mask)
 slider2:15<0,65535,1>-Destination channels (bit mask)
-slider3:128<0,65535,1>-CC 0-15 (bit mask)
+slider3:2178<0,65535,1>-CC 0-15 (bit mask)
 slider4:0<0,65535,1>-CC 16-31 (bit mask)
 slider5:0<0,65535,1>-CC 32-47 (bit mask)
 slider6:0<0,65535,1>-CC 48-63 (bit mask)
-slider7:0<0,65535,1>-CC 64-79 (bit mask)
+slider7:1<0,65535,1>-CC 64-79 (bit mask)
 slider8:0<0,65535,1>-CC 80-95 (bit mask)
 slider9:0<0,65535,1>-CC 96-111 (bit mask)
 slider10:0<0,65535,1>-CC 112-127 (bit mask)
@@ -50,6 +54,9 @@ slider10:0<0,65535,1>-CC 112-127 (bit mask)
 cc_on = 0;        // 128 flags: CC enabled
 name_off = 128;   // 128 offsets into #names
 name_len = 300;   // 128 lengths (name_off gets 129 entries, so keep a gap)
+cc_hit = 700;      // 128 flags: CC matches the search
+search_dirty = 1;
+strcpy(#search, "");
 cc_words = 512;   // 8 words (must not overlap the other arrays)
 src_mask = 1;
 dst_mask = 15;
@@ -143,7 +150,13 @@ function set_all(g, v)
   );
 );
 
-function grid_y(g) ( g == 1 ? 24 : g == 2 ? 76 : 128; );
+function grid_y(g) ( g == 1 ? 24 : g == 2 ? 76 : 150; );
+
+function apply_found(v)
+(
+  k = 0;
+  loop(128, cc_hit[k] ? (cc_on[k] = v;); k += 1;);
+);
 function grid_rh(g) ( g == 3 ? 20 : 26; );
 function grid_rows(g) ( g == 3 ? 8 : 1; );
 
@@ -168,12 +181,41 @@ while (midirecv(offset, msg1, msg2, msg3)) (
   );
 );
 
-@gfx 640 316
+@gfx 640 340
 pad = 10;
 cols = 16;
 cw = (gfx_w - 2 * pad) / cols;
 mx = mouse_x; my = mouse_y;
 mouse_down = mouse_cap & 1;
+
+// Keyboard: type to search CCs
+while ((c = gfx_getchar()) > 0) (
+  c == 8 ? (strlen(#search) > 0 ? strdel(#search, strlen(#search) - 1, 1);) :
+  c == 27 ? (strcpy(#search, "");) :
+  (c >= 32 && c < 127) ? sprintf(#search, "%s%c", #search, c);
+  search_dirty = 1;
+);
+search_dirty ? (
+  search_dirty = 0;
+  n_hit = 0;
+  k = 0;
+  loop(128,
+    cc_hit[k] = 0;
+    strlen(#search) > 0 ? (
+      strcpy_substr(#nm, #names, name_off[k], name_len[k]);
+      sprintf(#cand, "%d %s", k, #nm);
+      sprintf(#pat, "*%s*", #search);
+      matchi(#pat, #cand) ? (cc_hit[k] = 1; n_hit += 1;);
+    );
+    k += 1;
+  );
+);
+
+sbtn = 0;
+(my >= 128 && my < 144) ? (
+  (mx >= pad + 282 && mx < pad + 362) ? sbtn = 1;
+  (mx >= pad + 366 && mx < pad + 456) ? sbtn = 2;
+);
 
 // What is under the mouse?
 hover_g = 0; hover_i = -1;
@@ -201,7 +243,10 @@ loop(3,
 
 changed = 0;
 (mouse_down && !last_down) ? (
-  hover_btn_g ? (
+  sbtn ? (
+    apply_found(sbtn == 1);
+    changed = 1;
+  ) : hover_btn_g ? (
     set_all(hover_btn_g, hover_btn == 1);
     changed = 1;
   ) : hover_g ? (
@@ -253,6 +298,11 @@ loop(3,
       gfx_set(0.85, 0.55, 0.2, 1);
     ) : gfx_set(0.18, 0.18, 0.18, 1);
     gfx_rect(cx + 1, cy + 1, cw - 2, rh - 2, 1);
+    (g == 3 && cc_hit[i]) ? (
+      gfx_set(1, 0.9, 0.2, 1);
+      gfx_rect(cx + 1, cy + 1, cw - 2, rh - 2, 0);
+      gfx_rect(cx + 2, cy + 2, cw - 4, rh - 4, 0);
+    );
     (g == hover_g && i == hover_i) ? (
       gfx_set(1, 1, 1, 1);
       gfx_rect(cx + 1, cy + 1, cw - 2, rh - 2, 0);
@@ -268,9 +318,38 @@ loop(3,
   g += 1;
 );
 
+// Search row
+gfx_set(0.85, 0.85, 0.85, 1);
+gfx_x = pad; gfx_y = 129;
+gfx_drawstr("Search:");
+gfx_set(0.12, 0.12, 0.12, 1);
+gfx_rect(pad + 52, 128, 220, 16, 1);
+gfx_set(1, 1, 1, 1);
+gfx_x = pad + 56; gfx_y = 129;
+strlen(#search) > 0 ? gfx_drawstr(#search) : (gfx_set(1, 1, 1, 0.35); gfx_drawstr("type a name or number..."););
+b = 1;
+loop(2,
+  bx = pad + (b == 1 ? 282 : 366);
+  bw = b == 1 ? 80 : 90;
+  gfx_set(0.3, 0.3, 0.3, 1);
+  gfx_rect(bx, 128, bw, 16, 1);
+  gfx_set(1, 1, 1, 1);
+  sprintf(#s, "%s", b == 1 ? "Add found" : "Remove found");
+  gfx_measurestr(#s, tw, th);
+  gfx_x = bx + (bw - tw) / 2; gfx_y = 129;
+  gfx_drawstr(#s);
+  b += 1;
+);
+strlen(#search) > 0 ? (
+  gfx_set(0.85, 0.85, 0.85, 1);
+  gfx_x = pad + 462; gfx_y = 129;
+  sprintf(#s, "%d found", n_hit);
+  gfx_drawstr(#s);
+);
+
 // Info line
 gfx_set(0.85, 0.85, 0.85, 1);
-gfx_x = pad; gfx_y = 128 + 8 * 20 + 6;
+gfx_x = pad; gfx_y = 150 + 8 * 20 + 6;
 hover_g == 3 ? (
   strcpy_substr(#nm, #names, name_off[hover_i], name_len[hover_i]);
   sprintf(#info, "CC %d: %s", hover_i, #nm);
