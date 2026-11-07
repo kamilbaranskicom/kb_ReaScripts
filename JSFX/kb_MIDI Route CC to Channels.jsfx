@@ -1,7 +1,7 @@
 desc:kb_MIDI Route CC to Channels
 // @description kb_MIDI Route CC to Channels
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.3
+// @version 1.4
 // @about
 //   Copies or re-routes MIDI Control Change messages from chosen source channels to chosen
 //   destination channels, so e.g. one volume / expression fader can drive several instruments
@@ -23,6 +23,8 @@ desc:kb_MIDI Route CC to Channels
 //                     "None" clears the grid.
 //   The grid state is stored in hidden parameters, so it is saved with presets and projects.
 // @changelog
+//   + Defaults: Remove original (route), destinations 1-4
+//   + Fixed wrong description of CC 0 (array overlap)
 //   + Renamed from "Copy CC to Channels"; Original CC: Keep / Remove (route instead of copy)
 //   + Source channels and CC numbers as clickable grids (several of each), CC names on hover
 //   + Fixed mouse input
@@ -32,9 +34,9 @@ tags:midi cc copy channel
 in_pin:none
 out_pin:none
 
-slider11:0<0,1,1{Keep original,Remove original (route)}>Original CC
+slider11:1<0,1,1{Keep original,Remove original (route)}>Original CC
 slider1:1<0,65535,1>-Source channels (bit mask)
-slider2:14<0,65535,1>-Copy-to channels (bit mask)
+slider2:15<0,65535,1>-Destination channels (bit mask)
 slider3:128<0,65535,1>-CC 0-15 (bit mask)
 slider4:0<0,65535,1>-CC 16-31 (bit mask)
 slider5:0<0,65535,1>-CC 32-47 (bit mask)
@@ -47,10 +49,10 @@ slider10:0<0,65535,1>-CC 112-127 (bit mask)
 @init
 cc_on = 0;        // 128 flags: CC enabled
 name_off = 128;   // 128 offsets into #names
-name_len = 256;   // 128 lengths
+name_len = 300;   // 128 lengths (name_off gets 129 entries, so keep a gap)
 cc_words = 512;   // 8 words (must not overlap the other arrays)
 src_mask = 1;
-dst_mask = 14;
+dst_mask = 15;
 last_down = 0;
 active_g = 0;
 
