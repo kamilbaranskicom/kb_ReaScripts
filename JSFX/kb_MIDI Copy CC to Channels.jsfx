@@ -41,6 +41,7 @@ slider10:0<0,65535,1>-CC 112-127 (bit mask)
 cc_on = 0;        // 128 flags: CC enabled
 name_off = 128;   // 128 offsets into #names
 name_len = 256;   // 128 lengths
+cc_words = 512;   // 8 words (must not overlap the other arrays)
 src_mask = 1;
 dst_mask = 14;
 last_down = 0;
@@ -160,8 +161,8 @@ while (midirecv(offset, msg1, msg2, msg3)) (
 pad = 10;
 cols = 16;
 cw = (gfx_w - 2 * pad) / cols;
-mx = gfx_mouse_x; my = gfx_mouse_y;
-mouse_down = gfx_mouse_cap & 1;
+mx = mouse_x; my = mouse_y;
+mouse_down = mouse_cap & 1;
 
 // What is under the mouse?
 hover_g = 0; hover_i = -1;
