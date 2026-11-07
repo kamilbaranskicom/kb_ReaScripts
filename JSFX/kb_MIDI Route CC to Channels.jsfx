@@ -1,23 +1,29 @@
-desc:kb_MIDI Copy CC to Channels
-// @description kb_MIDI Copy CC to Channels
+desc:kb_MIDI Route CC to Channels
+// @description kb_MIDI Route CC to Channels
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.2
+// @version 1.3
 // @about
-//   Copies MIDI Control Change messages from chosen source channels to chosen destination channels,
-//   so e.g. one volume / expression fader can drive several instruments (strings on channels 2-4)
-//   at once. The original message always passes through; all other MIDI is untouched. Only the
-//   selected channels get copies, so the MIDI bus is not flooded with 16 channels.
+//   Copies or re-routes MIDI Control Change messages from chosen source channels to chosen
+//   destination channels, so e.g. one volume / expression fader can drive several instruments
+//   (strings on channels 2-4) at once. All other MIDI is untouched. Only the selected channels
+//   get messages, so the MIDI bus is not flooded with 16 channels.
+//
+//   PARAMETER
+//   Original CC       Keep original = the incoming CC passes through and copies are added.
+//                     Remove original = a matching CC is NOT passed on, only sent to the
+//                     destination channels (e.g. CC arrives on ch 1, goes only to ch 5, 6, 7).
 //
 //   GRIDS (click to toggle, click and drag to paint many at once)
 //   Source channels   Channels the CC is read from (several can be selected).
-//   Copy to channels  Channels that receive the copies. A copy is never sent back to the channel
-//                     the message came from.
+//   Destination channels  Channels that receive the CC. With Keep original, a copy is never sent
+//                     back to the channel the message came from (it would be a duplicate).
 //   CC numbers        Which controllers are copied (0-127). Hover a cell to see the CC name,
 //                     e.g. "CC 7: Channel Volume (MSB)". Buttons: "0-119" selects all real
 //                     controllers (not the channel-mode messages 120-127, e.g. All Notes Off),
 //                     "None" clears the grid.
 //   The grid state is stored in hidden parameters, so it is saved with presets and projects.
 // @changelog
+//   + Renamed from "Copy CC to Channels"; Original CC: Keep / Remove (route instead of copy)
 //   + Source channels and CC numbers as clickable grids (several of each), CC names on hover
 //   + Fixed mouse input
 //   + Channel grid (click / drag) instead of 16 separate sliders
@@ -26,6 +32,7 @@ tags:midi cc copy channel
 in_pin:none
 out_pin:none
 
+slider11:0<0,1,1{Keep original,Remove original (route)}>Original CC
 slider1:1<0,65535,1>-Source channels (bit mask)
 slider2:14<0,65535,1>-Copy-to channels (bit mask)
 slider3:128<0,65535,1>-CC 0-15 (bit mask)
@@ -143,15 +150,17 @@ load_from_sliders();
 
 @block
 while (midirecv(offset, msg1, msg2, msg3)) (
-  midisend(offset, msg1, msg2, msg3); // original always passes through
-
   status = msg1 & $xF0;
   ch = msg1 & $x0F;       // 0-based
+  hit = (status == $xB0 && ((src_mask >> ch) & 1) && cc_on[msg2 & 127]);
+  remove_orig = slider11 == 1;
 
-  (status == $xB0 && ((src_mask >> ch) & 1) && cc_on[msg2 & 127]) ? (
+  (!(hit && remove_orig)) ? midisend(offset, msg1, msg2, msg3); // original passes unless routed away
+
+  hit ? (
     d = 0;
     loop(16,
-      (d != ch && ((dst_mask >> d) & 1)) ? midisend(offset, $xB0 | d, msg2, msg3);
+      ((remove_orig || d != ch) && ((dst_mask >> d) & 1)) ? midisend(offset, $xB0 | d, msg2, msg3);
       d += 1;
     );
   );
@@ -214,7 +223,7 @@ loop(3,
   gfx_set(0.85, 0.85, 0.85, 1);
   gfx_x = pad; gfx_y = gy - 19;
   g == 1 ? gfx_drawstr("Source channels (read CC from)") :
-  g == 2 ? gfx_drawstr("Copy to channels") :
+  g == 2 ? gfx_drawstr("Destination channels") :
   gfx_drawstr("CC numbers (hover for name)");
 
   // buttons
