@@ -190,7 +190,7 @@ mouse_down = mouse_cap & 1;
 
 // Keyboard: type to search CCs
 while ((c = gfx_getchar()) > 0) (
-  c == 8 ? (strlen(#search) > 0 ? strdel(#search, strlen(#search) - 1, 1);) :
+  c == 8 ? (strlen(#search) > 0 ? (strcpy_substr(#tmp, #search, 0, strlen(#search) - 1); strcpy(#search, #tmp);)) :
   c == 27 ? (strcpy(#search, "");) :
   (c >= 32 && c < 127) ? sprintf(#search, "%s%c", #search, c);
   search_dirty = 1;
