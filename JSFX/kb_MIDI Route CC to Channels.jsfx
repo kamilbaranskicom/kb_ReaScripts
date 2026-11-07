@@ -150,7 +150,7 @@ function set_all(g, v)
   );
 );
 
-function grid_y(g) ( g == 1 ? 24 : g == 2 ? 76 : 150; );
+function grid_y(g) ( g == 1 ? 24 : g == 2 ? 76 : 172; );
 
 function apply_found(v)
 (
@@ -181,7 +181,7 @@ while (midirecv(offset, msg1, msg2, msg3)) (
   );
 );
 
-@gfx 640 340
+@gfx 640 362
 pad = 10;
 cols = 16;
 cw = (gfx_w - 2 * pad) / cols;
@@ -349,7 +349,7 @@ strlen(#search) > 0 ? (
 
 // Info line
 gfx_set(0.85, 0.85, 0.85, 1);
-gfx_x = pad; gfx_y = 150 + 8 * 20 + 6;
+gfx_x = pad; gfx_y = 172 + 8 * 20 + 6;
 hover_g == 3 ? (
   strcpy_substr(#nm, #names, name_off[hover_i], name_len[hover_i]);
   sprintf(#info, "CC %d: %s", hover_i, #nm);
