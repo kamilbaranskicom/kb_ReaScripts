@@ -1,6 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="kb_ReaScripts" commit="5f5f730c5592343710d37bdbddc45b0d62cd7568">
+<index version="1" name="kb_ReaScripts" commit="49d507f18e86ab833b905fd0509b15040db4b251">
   <category name="JSFX">
+    <reapack name="kb_Audio Click to Delay Time for Replika XT.jsfx" type="effect" desc="kb_Audio Click to Delay Time (ms) - Replika XT Link">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 Detects clicks (tempo taps) in the audio input, works out the BPM and shows the delay time for the chosen subdivision. Map the Delay Time readout slider to the Replika XT delay parameter.\par}
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 PARAMETERS Delay Time [Readout] Output: delay time in ms (subdivision of detected tempo + offset). Map this. Detected BPM [Readout] Output: detected (quantized) tempo. Subdivision Note value the delay time is calculated for (1/4 = one beat). Threshold Input level (dB) a click must exceed to be detected. Min / Max BPM Accepted tempo range. Clicks outside it are ignored; double/triple/1.5x intervals are folded into the range (subclick / shuffle handling). Audio Input Channel Which channel(s) are analysed: stereo sum, left or right. Consistency Tolerance How much (%) consecutive click intervals may differ to still count as the same tempo. Larger = more forgiving of sloppy timing; a bigger difference is treated as a new tempo and the detection restarts. Lock Intervals How many consistent intervals are averaged before the readout updates. 2 = fastest lock (3 clicks); more = steadier, but slower. Output Hysteresis Readout changes only if the new tempo differs by more than this (%). Filters tiny jitter; 0 = follow every update. BPM Quantize Rounds the detected BPM to this step BEFORE anything else (so the ms value is derived from the rounded BPM). Off = no rounding. Delay Offset (ms) Added to the final delay time. Negative = shorter. Use it to shift the echo so it does not smear the next transient. Delay Offset (%) Scales the delay time (e.g. -1 = 1% shorter), so it follows tempo and subdivision. Applied before the ms offset, which is then added.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T20:13:57Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/812557ed9f48f7f3e6a854e07ffe7acbe10d7c40/JSFX/kb_Audio%20Click%20to%20Delay%20Time%20for%20Replika%20XT.jsfx</source>
+      </version>
+      <version name="1.2" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T21:22:31Z">
+        <changelog><![CDATA[+ BPM Quantize (default 1 BPM), Delay Offset (ms) and Delay Offset (%)
++ Parameters documented in the header
++ Readout sliders moved to the top (easier mapping)
++ Lock Intervals and Output Hysteresis: stable readouts without jitter]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/9343363e5afbd41588b6cedd9a82ab8a521d1ee8/JSFX/kb_Audio%20Click%20to%20Delay%20Time%20for%20Replika%20XT.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="kb_MIDI Clock to Delay Time (ms) - Replika XT Link.jsfx" type="effect" desc="kb_MIDI Clock to Delay Time (ms) - Replika XT Link">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 Measures the tempo of incoming MIDI Clock (0xF8, 24 ticks per quarter note) with sample-accurate timing, works out the BPM and shows the delay time for the chosen subdivision. Map the Delay Time readout slider to a delay parameter (e.g. Replika XT). MIDI passes through unchanged.\par}
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 PARAMETERS Delay Time [Readout] Output: delay time in ms (subdivision of detected tempo + offsets). Map this. Detected BPM [Readout] Output: detected (quantized) tempo. Subdivision Note value the delay time is calculated for (1/4 = one beat). Min / Max BPM Accepted tempo range. Beats outside it are ignored. Consistency Tolerance How much (%) consecutive beat lengths may differ to still count as the same tempo. Larger = more forgiving; a bigger difference is treated as a new tempo and the detection restarts. Lock Intervals How many consistent beats are averaged before the readout updates. 1 = fastest lock; more = steadier, but slower. Output Hysteresis Readout changes only if the new tempo differs by more than this (%). Filters tiny jitter; 0 = follow every update. BPM Quantize Rounds the detected BPM to this step BEFORE anything else (so the ms value is derived from the rounded BPM). Off = no rounding. Delay Offset (ms) Added to the final delay time. Negative = shorter. Use it to shift the echo so it does not smear the next transient. Delay Offset (%) Scales the delay time (e.g. -1 = 1% shorter), so it follows tempo and subdivision. Applied before the ms offset, which is then added.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T21:29:59Z">
+        <changelog><![CDATA[+ Initial release: sample-accurate MIDI Clock tempo detection, Start/Stop reset, MIDI pass-through
++ Subdivision, Lock Intervals, Output Hysteresis, BPM Quantize, Delay Offset (ms and %)]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/fd778b08438c909fce709680c0ad8a2c827fecdc/JSFX/kb_MIDI%20Clock%20to%20Delay%20Time%20(ms)%20-%20Replika%20XT%20Link.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="kb_MIDI Invert Drawbars CC (Nord Stage 3 to NI B3).jsfx" type="effect" desc="kb_MIDI Invert Drawbars CC (Nord Stage 3 to NI B3)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 Inverts the values of drawbar controllers (CC 16-24, value -> 127 - value), because the Nord Stage 3 drawbars work in the opposite direction to the drawbars in NI B3 / Kontakt Organs. All other MIDI messages pass through unchanged.\par}
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 PARAMETERS MIDI Channel Channel on which the drawbar CCs are inverted (All = every channel).\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T21:40:21Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/19215ce54cac595361193c2706cf96a02b058af0/JSFX/kb_MIDI%20Invert%20Drawbars%20CC%20(Nord%20Stage%203%20to%20NI%20B3).jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="kb_MIDI Route (Copy) CC to Channels.jsfx" type="effect" desc="kb_MIDI Route (Copy) CC to Channels">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 Copies or re-routes MIDI Control Change messages from chosen source channels to chosen destination channels, so e.g. one volume / expression fader can drive several instruments (strings on channels 2-4) at once. All other MIDI is untouched. Only the selected channels get messages, so the MIDI bus is not flooded with 16 channels.\par}
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 PARAMETER Original CC Keep original = the incoming CC passes through and copies are added. Remove original = a matching CC is NOT passed on, only sent to the destination channels (e.g. CC arrives on ch 1, goes only to ch 5, 6, 7).\par}
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 GRIDS (click to toggle, click and drag to paint many at once) Source channels Channels the CC is read from (several can be selected). Destination channels Channels that receive the CC. With Keep original, a copy is never sent back to the channel the message came from (it would be a duplicate). CC numbers Which controllers are copied (0-127). Hover a cell to see the CC name, e.g. "CC 7: Channel Volume (MSB)". Buttons: "0-119" selects all real controllers (not the channel-mode messages 120-127, e.g. All Notes Off), "None" clears the grid. Search Click the search field (a blinking cursor shows it is active), then type to find CCs by name or number (e.g. "vol", "pan", "64"); matches get a yellow outline. Backspace deletes, Esc clears. "Add found" / "Remove found" switch all matches on / off in one click. The grid state is stored in hidden parameters, so it is saved with presets and projects.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.6" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-07T13:18:39Z">
+        <changelog><![CDATA[+ Renamed to "Route (Copy) CC to Channels" (easier to find in ReaPack)
++ Search field focus with a blinking cursor (click the field to type, click elsewhere to leave)
++ CC search by name / number, default CCs: 1, 7, 11, 64
++ Defaults: Remove original (route), destinations 1-4
++ Fixed wrong description of CC 0 (array overlap)
++ Renamed from "Copy CC to Channels"; Original CC: Keep / Remove (route instead of copy)
++ Source channels and CC numbers as clickable grids (several of each), CC names on hover
++ Fixed mouse input
++ Channel grid (click / drag) instead of 16 separate sliders
++ Initial release]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/49d507f18e86ab833b905fd0509b15040db4b251/JSFX/kb_MIDI%20Route%20(Copy)%20CC%20to%20Channels.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="kb_Recording_Clock.jsfx" type="effect" desc="kb_Recording Clock">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
@@ -52,6 +134,23 @@
       <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:38:13Z">
         <changelog><![CDATA[+ Initial release]]></changelog>
         <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/d41fb5250d3f0886dfbf275518a37cd5bb804665/JSFX/kb_RME%20TotalMix%20Talkback%20control.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Transport State Monitor.jsfx" type="effect" desc="kb_Transport State Monitor">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 Turns the REAPER transport state into a parameter: 1 while playing or recording, 0 otherwise (stopped or paused). Use it as a source for Parameter Modulation / Link from FX parameter, so another plugin parameter can follow play/stop (e.g. switch an effect on only during playback, or reset something on start). Audio and MIDI are not touched.\par}
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 PARAMETERS Play State [Readout] Output: 1 = playing or recording, 0 = stopped / paused. Do not edit by hand.\par}
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 NOTE: the track must be processed while the transport is stopped for the 0 to be reported (enable "Run FX when stopped" in REAPER's FX / track settings).\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T21:43:55Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/6a68b4bc5f30c0bfa733064fee1951fadb4ce9d5/JSFX/kb_Transport%20State%20Monitor.jsfx</source>
       </version>
     </reapack>
     <reapack name="kb_Visual Metronome Flasher.jsfx" type="effect" desc="kb_Visual Metronome Flasher">
