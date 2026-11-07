@@ -1,7 +1,7 @@
 desc:kb_MIDI Route CC to Channels
 // @description kb_MIDI Route CC to Channels
 // @author Kamil Baranski (kamilbaranski.com)
-// @version 1.5
+// @version 1.6
 // @about
 //   Copies or re-routes MIDI Control Change messages from chosen source channels to chosen
 //   destination channels, so e.g. one volume / expression fader can drive several instruments
@@ -21,11 +21,12 @@ desc:kb_MIDI Route CC to Channels
 //                     e.g. "CC 7: Channel Volume (MSB)". Buttons: "0-119" selects all real
 //                     controllers (not the channel-mode messages 120-127, e.g. All Notes Off),
 //                     "None" clears the grid.
-//   Search           Type in the window to find CCs by name or number (e.g. "vol", "pan", "64");
+//   Search           Click the search field (a blinking cursor shows it is active), then type to find CCs by name or number (e.g. "vol", "pan", "64");
 //                    matches get a yellow outline. Backspace deletes, Esc clears. "Add found" /
 //                    "Remove found" switch all matches on / off in one click.
 //   The grid state is stored in hidden parameters, so it is saved with presets and projects.
 // @changelog
+//   + Search field focus with a blinking cursor (click the field to type, click elsewhere to leave)
 //   + CC search by name / number, default CCs: 1, 7, 11, 64
 //   + Defaults: Remove original (route), destinations 1-4
 //   + Fixed wrong description of CC 0 (array overlap)
@@ -56,6 +57,7 @@ name_off = 128;   // 128 offsets into #names
 name_len = 300;   // 128 lengths (name_off gets 129 entries, so keep a gap)
 cc_hit = 700;      // 128 flags: CC matches the search
 search_dirty = 1;
+search_focus = 0;
 strcpy(#search, "");
 cc_words = 512;   // 8 words (must not overlap the other arrays)
 src_mask = 1;
@@ -190,6 +192,7 @@ mouse_down = mouse_cap & 1;
 
 // Keyboard: type to search CCs
 while ((c = gfx_getchar()) > 0) (
+  !search_focus ? c = 0; // ignore keys unless the field is active
   c == 8 ? (strlen(#search) > 0 ? (strcpy_substr(#tmp, #search, 0, strlen(#search) - 1); strcpy(#search, #tmp);)) :
   c == 27 ? (strcpy(#search, "");) :
   (c >= 32 && c < 127) ? sprintf(#search, "%s%c", #search, c);
@@ -243,6 +246,7 @@ loop(3,
 
 changed = 0;
 (mouse_down && !last_down) ? (
+  search_focus = (mx >= pad + 52 && mx < pad + 272 && my >= 128 && my < 144);
   sbtn ? (
     apply_found(sbtn == 1);
     changed = 1;
@@ -327,6 +331,15 @@ gfx_rect(pad + 52, 128, 220, 16, 1);
 gfx_set(1, 1, 1, 1);
 gfx_x = pad + 56; gfx_y = 129;
 strlen(#search) > 0 ? gfx_drawstr(#search) : (gfx_set(1, 1, 1, 0.35); gfx_drawstr("type a name or number..."););
+search_focus ? (
+  gfx_set(0.4, 0.6, 1, 1);
+  gfx_rect(pad + 52, 128, 220, 16, 0);
+  (floor(time_precise() * 2) % 2 == 0) ? (
+    gfx_measurestr(#search, tw, th);
+    gfx_set(1, 1, 1, 1);
+    gfx_rect(pad + 56 + tw + 1, 130, 1, 12, 1);
+  );
+);
 b = 1;
 loop(2,
   bx = pad + (b == 1 ? 282 : 366);
