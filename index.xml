@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="kb_ReaScripts" commit="45a919fd5bb8e9ebfb39db6bd5c8c9adb035ae0c">
+<index version="1" name="kb_ReaScripts" commit="5f5f730c5592343710d37bdbddc45b0d62cd7568">
   <category name="JSFX">
     <reapack name="kb_Recording_Clock.jsfx" type="effect" desc="kb_Recording Clock">
       <metadata>
@@ -52,6 +52,34 @@
       <version name="1.0" author="Kamil Baranski (kamilbaranski.com)" time="2026-10-25T22:38:13Z">
         <changelog><![CDATA[+ Initial release]]></changelog>
         <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/d41fb5250d3f0886dfbf275518a37cd5bb804665/JSFX/kb_RME%20TotalMix%20Talkback%20control.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="kb_Visual Metronome Flasher.jsfx" type="effect" desc="kb_Visual Metronome Flasher">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \fs24 \sa180 \li0 \fi0 Visual metronome. Pass-through; put on a track or master and open the JSFX window. Flashes on every selected beat division (1/8 ... 6 beats), with a selectable decay curve. The first beat of a bar can use its own color and brightness (bar length from the time signature at the playback position).\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T19:44:53Z">
+        <changelog><![CDATA[+ Renamed to kb_Visual Metronome Flasher
++ Smoother flash: full-brightness hit with a soft (squared) decay instead of a dim, linear blink
++ Fade is always scaled to fit the beat interval (no more cut-off flashes at fast tempos)
++ Sample-accurate beat detection
++ New divisions: every 2, 3, 4 and 6 beats
++ Fixed color calculation (HSV)]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/dae289b080573dc8b50fc6989ecf6ffb5f4dd9da/JSFX/kb_Visual%20Metronome%20Flasher.jsfx</source>
+      </version>
+      <version name="1.2" author="Kamil Baranski (kamilbaranski.com)" time="2026-11-05T19:51:21Z">
+        <changelog><![CDATA[+ Separate color and brightness for the bar downbeat (can be turned off)
++ Brightness for both colors
++ Selectable decay curve
++ Fade is now drawn from wall-clock time, so it no longer depends on the GUI/audio block timing
++ Renamed to kb_Visual Metronome Flasher, new divisions: 2, 3, 4, 6 beats]]></changelog>
+        <source>https://github.com/kamilbaranskicom/kb_ReaScripts/raw/5f5f730c5592343710d37bdbddc45b0d62cd7568/JSFX/kb_Visual%20Metronome%20Flasher.jsfx</source>
       </version>
     </reapack>
   </category>
